@@ -1,0 +1,10 @@
+exposure_value = 0.0
+perc_top = 0.35
+perc_bottom = 0.6
+min_score = 0.5
+limit_center = 8
+sec_run_model = 0.4
+wait_key = 16
+square_size = 640
+grid_x = 0
+grid_y = 0

@@ -1,0 +1,8 @@
+exposure_value = 0
+perc_min = 0.4
+perc_max = 0.8
+min_score = 0.5
+limit_center = 8
+sec_run_model = 0.4
+wait_key = 16
+save_dir = data\outputs\capturas
