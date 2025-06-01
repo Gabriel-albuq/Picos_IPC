@@ -1,0 +1,8 @@
+perc_top = 0.4
+perc_bottom = 0.8
+min_score = 0.5
+limit_center = 8
+square_size = 640
+grid_x = 0
+grid_y = 0
+crop_image = 1

@@ -1,0 +1,30 @@
+site_name: PICOS - Plataforma Inteligente de Contagem de Objetos Selecionados
+theme:
+  name: material # or other theme
+  palette:
+    primary: indigo
+  language: pt
+
+#repo_name: "usuario/projeto"
+#repo_url: "https://github.com/usuario/projeto" # Para hospedar a documentação no github
+
+nav:
+  - Início: index.md
+  - Instalação: installation.md
+  - Uso: usage.md
+  - Modelo: model.md
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python

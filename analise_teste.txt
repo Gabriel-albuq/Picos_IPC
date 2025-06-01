@@ -1,0 +1,50 @@
+threshold = 0.5
+limit_center = 15
+result = check_geral(threshold=threshold, limit_center=limit_center, print_images=True)
+
+Errado (8)
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0143_jpg.rf.4e2354814f8a56b578d040381ac32797_g3.jpg
+
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0092_jpg.rf.08dbe7786ec0beaf22bae5e70bfa2b9d_g2.jpg
+
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0110_jpg.rf.1ba605d8d53588e6c2c5ae47ab7c52f2_g1.jpg
+
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0278_jpg.rf.6a841ca0345ba2161bc8929b707a141d_g2.jpg
+
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0185_jpg.rf.060a6b287c7f7ed1b6b874d7c1a6ffbc_g2.jpg
+
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0019_jpg.rf.286577a2704a751b0b89c81b8cd44fc0_g3.jpg
+
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0221_jpg.rf.f3c328e79504c5d21d6e1133fa2cf70a_g1.jpg
+
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0079_jpg.rf.f9c24dc3796446c109b3f5678e92f562_g1.jpg
+
+Errado por desalinhamento (7)
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0087_jpg.rf.535a60f3af1eceab92bed7e3e1dc8bb7_g2.jpg
+
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0104_jpg.rf.0af8c613c5ce105437879eb1dc694d91_g2.jpg
+
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0083_jpg.rf.700b1e4b1c85ae00fd8dfcb4ec6b732b_g3.jpg
+
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0179_jpg.rf.34d587d934f335a59fd8d603d842733e_g4.jpg
+
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0171_jpg.rf.8d7193fc59ae959e41ce5e9090bd91a9_g1.jpg
+
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0214_jpg.rf.64879f583a66bbf5573b7a1f1b3129a5_g1.jpg
+
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0221_jpg.rf.f3c328e79504c5d21d6e1133fa2cf70a_g3.jpg
+
+Desconsiderar por biscoito na horizontal (3)
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0106_jpg.rf.e7559511a40234440ae049ca41ab4537_g3.jpg
+
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0104_jpg.rf.0af8c613c5ce105437879eb1dc694d91_g1.jpg
+
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0105_jpg.rf.8c8265f5a0b1d266eb69c808a5a109d3_g3.jpg
+
+
+Falso errado (3)
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0092_jpg.rf.08dbe7786ec0beaf22bae5e70bfa2b9d_g4.jpg
+
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0269_jpg.rf.bab0b8aad31e8788b2168b74cf573c2b_g4.jpg
+
+     c:\ProjetosPython\PICOS\data/inputs/train_images/COCO_2025.05_group/valid\frame_0036_jpg.rf.799c997b2d59f442b7d888c7a85bf089_g2.jpg
