@@ -13,9 +13,6 @@ def load_settings(config_path):
     sec_run_model = 0.4
     wait_key = 16  # Valor padrão
     save_dir = 'data\outputs\capturas'
-    square_size = 640
-    grid_x = 0
-    grid_y = 0
 
     arquivo = config_path
     try:
@@ -44,12 +41,16 @@ def load_settings(config_path):
                         wait_key = int(valor)  # Atribui diretamente
                     elif chave == 'save_dir':
                         save_dir = valor
-                    elif chave == 'square_size':
-                        square_size = int(valor)
-                    elif chave == 'grid_x':
-                        grid_x = int(valor)
-                    elif chave == 'grid_y':
-                        grid_y = int(valor)
+                    elif chave == 'deslocamento_esquerda':
+                        deslocamento_esquerda = int(valor)
+                    elif chave == 'deslocamento_direita':
+                        deslocamento_direita = int(valor)
+                    elif chave == 'box_size':
+                        box_size = int(valor)
+                    elif chave == 'box_distance':
+                        box_distance = int(valor)
+                    elif chave == 'box_offset_x':
+                        box_offset_x = int(valor)
     except Exception as e:
         print(f'Erro ao ler o arquivo: {e}')
 
@@ -62,15 +63,17 @@ def load_settings(config_path):
         sec_run_model,
         wait_key,
         save_dir,
-        square_size,
-        grid_x,
-        grid_y,
+        deslocamento_esquerda,
+        deslocamento_direita,
+        box_size,
+        box_distance,
+        box_offset_x,
     )
 
 
 def save_settings(config_path, exposure_value, perc_top, 
                  perc_bottom, min_score, limit_center, sec_run_model, 
-                 wait_key, save_dir, square_size, grid_x, grid_y):
+                 wait_key, save_dir, deslocamento_esquerda, deslocamento_direita, box_size, box_distance, box_offset_x):
     """Função para salvar as configurações atuais diretamente nas variáveis no arquivo .txt."""
     arquivo = config_path
     try:
@@ -82,9 +85,11 @@ def save_settings(config_path, exposure_value, perc_top,
             file.write(f'limit_center = {limit_center}\n')
             file.write(f'sec_run_model = {sec_run_model}\n')
             file.write(f'wait_key = {wait_key}\n')
-            file.write(f'square_size = {square_size}\n')
-            file.write(f'grid_x = {grid_x}\n')
-            file.write(f'grid_y = {grid_y}\n')
+            file.write(f'deslocamento_esquerda = {deslocamento_esquerda}\n')
+            file.write(f'deslocamento_direita = {deslocamento_direita}\n')
+            file.write(f'box_size = {box_size}\n')
+            file.write(f'box_distance = {box_distance}\n')
+            file.write(f'box_offset_x = {box_offset_x}\n')
             
             # Verifica se o save_dir não é None antes de salvar
             if save_dir is not None:
@@ -110,10 +115,12 @@ def start_application_interface(config_path):
         'save_dir': None,
         'sec_run_model': None,
         'wait_key': None,
-        'square_size': None,
-        'grid_x': None,
-        'grid_y': None,
-        'camera_backend': None  # Novo campo para o backend da câmera
+        'camera_backend': None,  # Novo campo para o backend da câmera
+        'deslocamento_esquerda': None,
+        'deslocamento_direita': None,
+        'box_size': None,
+        'box_distance': None,
+        'box_offset_x': None
     }
 
     (
@@ -125,9 +132,11 @@ def start_application_interface(config_path):
         sec_run_model,
         wait_key,
         save_dir,
-        square_size,
-        grid_x,
-        grid_y,
+        deslocamento_esquerda,
+        deslocamento_direita,
+        box_size,
+        box_distance,
+        box_offset_x,
     ) = load_settings(config_path)
     
     def submit():
@@ -143,15 +152,6 @@ def start_application_interface(config_path):
             return
         if not camera_backend_var.get():
             messagebox.showerror("Erro", "Você deve selecionar um backend para a câmera (OpenCV ou GxCam).")
-            return
-        if not square_size_entry.get():
-            messagebox.showerror("Erro", "O campo 'Tamanho da área de interesse' não pode estar vazio.")
-            return
-        if not grid_x_entry.get():
-            messagebox.showerror("Erro", "O campo 'Localização em X' não pode estar vazio.")
-            return
-        if not grid_y_entry.get():
-            messagebox.showerror("Erro", "O campo 'Localização em Y' não pode estar vazio.")
             return
         if not exposure_value_entry.get():
             messagebox.showerror("Erro", "O campo 'Valor de exposição' não pode estar vazio.")
@@ -355,9 +355,11 @@ def start_application_interface(config_path):
                 result['sec_run_model'], 
                 result['wait_key'], 
                 result['save_dir'],
-                result['square_size'], 
-                result['grid_x'], 
-                result['grid_y']) 
+                result['deslocamento_esquerda'], 
+                result['deslocamento_direita'], 
+                result['box_size'],
+                result['box_distance'],
+                result['box_offset_x']) 
     
     # Retorna os valores coletados incluindo o camera_backend
     return (
@@ -374,9 +376,11 @@ def start_application_interface(config_path):
         result['save_dir'],
         result['sec_run_model'],
         result['wait_key'],
-        result['square_size'],
-        result['grid_x'],
-        result['grid_y']
+        result['deslocamento_esquerda'], 
+        result['deslocamento_direita'], 
+        result['box_size'],
+        result['box_distance'],
+        result['box_offset_x']
     )
 
 

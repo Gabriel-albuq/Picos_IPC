@@ -25,11 +25,7 @@ def load_settings(config_path):
         'perc_bottom': 0.8,
         'min_score': 0.5,
         'limit_center': 8,
-        'save_dir': 'data\\outputs\\capturas',
-        'square_size': 640,
-        'grid_x': 0,
-        'grid_y': 0,
-        'crop_image': 1  # 1 = Sim
+        'save_dir': 'data\\outputs\\capturas'
     }
 
     try:
@@ -65,11 +61,7 @@ def load_settings(config_path):
         defaults['perc_bottom'],
         defaults['min_score'],
         defaults['limit_center'],
-        defaults['save_dir'],
-        defaults['square_size'],
-        defaults['grid_x'],
-        defaults['grid_y'],
-        defaults['crop_image'],
+        defaults['save_dir']
     )
 
 
@@ -84,10 +76,6 @@ def save_settings(config_path, perc_top,
             file.write(f'perc_bottom = {perc_bottom}\n')
             file.write(f'min_score = {min_score}\n')
             file.write(f'limit_center = {limit_center}\n')
-            file.write(f'square_size = {square_size}\n')
-            file.write(f'grid_x = {grid_x}\n')
-            file.write(f'grid_y = {grid_y}\n')
-            file.write(f'crop_image = {crop_image}\n')
             
             # Verifica se o save_dir não é None antes de salvar
             if save_dir is not None:
@@ -110,11 +98,7 @@ def start_application_interface(config_path):
         'min_score': None,
         'limit_center': None,
         'save_dir': None,
-        'square_size': None,
-        'grid_x': None,
-        'grid_y': None,
         'camera_backend': None,  # Novo campo para o backend da câmera
-        'crop_image': None  # Novo campo para cortar imagem
     }
 
     (
@@ -123,10 +107,6 @@ def start_application_interface(config_path):
         min_score,
         limit_center,
         save_dir,
-        square_size,
-        grid_x,
-        grid_y,
-        crop_image,
     ) = load_settings(config_path)
     
     def submit():
@@ -142,15 +122,6 @@ def start_application_interface(config_path):
             return
         if not camera_backend_var.get():
             messagebox.showerror("Erro", "Você deve selecionar um backend para a câmera (OpenCV ou GxCam).")
-            return
-        if not square_size_entry.get():
-            messagebox.showerror("Erro", "O campo 'Tamanho da área de interesse' não pode estar vazio.")
-            return
-        if not grid_x_entry.get():
-            messagebox.showerror("Erro", "O campo 'Localização em X' não pode estar vazio.")
-            return
-        if not grid_y_entry.get():
-            messagebox.showerror("Erro", "O campo 'Localização em Y' não pode estar vazio.")
             return
         if not perc_top_entry.get():
             messagebox.showerror("Erro", "O campo 'Percentual Mínimo' não pode estar vazio.")
@@ -174,11 +145,7 @@ def start_application_interface(config_path):
         result['perc_bottom'] = float(perc_bottom_entry.get())
         result['min_score'] = float(min_score_entry.get())
         result['limit_center'] = int(limit_center_entry.get())
-        result['square_size'] = int(square_size_entry.get())
-        result['grid_x'] = int(grid_x_entry.get())
-        result['grid_y'] = int(grid_y_entry.get())
         result['camera_backend'] = camera_backend_var.get()
-        result['crop_image'] = int(crop_image_var.get())
         
         # Verifica a opção de salvar detecções
         if not save_detection_var.get():  # Caso "Não salvar detecções" esteja marcado
@@ -264,32 +231,6 @@ def start_application_interface(config_path):
     save_detection_checkbox = tk.Checkbutton(root, text="Não salvar detecções", variable=save_detection_var, command=toggle_save_dir)
     save_detection_checkbox.grid(row=7, column=1, padx=pad_x, pady=pad_y, sticky='w')
 
-    # Opção para "Cortar imagem?" (novo campo)
-    tk.Label(root, text="Cortar imagem:", anchor='w', width=30).grid(row=8, column=0, padx=pad_x, pady=pad_y, sticky='w')
-    crop_image_var = tk.StringVar(value=1)  # Valor padrão 1 (Sim)
-    frame_crop = tk.Frame(root)
-    frame_crop.grid(row=8, column=1, padx=pad_x, pady=pad_y, sticky='w')
-    tk.Radiobutton(frame_crop, text="Sim", variable=crop_image_var, value="1").pack(side='left')
-    tk.Radiobutton(frame_crop, text="Não", variable=crop_image_var, value="0").pack(side='left')
-
-    # Tamanho da área de interesse
-    tk.Label(root, text="Tamanho da área de interesse:", anchor='w', width=30).grid(row=9, column=0, padx=pad_x, pady=pad_y, sticky='w')
-    square_size_entry = tk.Entry(root, width=30)
-    square_size_entry.grid(row=9, column=1, padx=pad_x, pady=pad_y)
-    square_size_entry.insert(0, square_size)  # Preenche com o valor do config.txt
-    
-    # Localização em X
-    tk.Label(root, text="Localização em X:", anchor='w', width=30).grid(row=10, column=0, padx=pad_x, pady=pad_y, sticky='w')
-    grid_x_entry = tk.Entry(root, width=30)
-    grid_x_entry.grid(row=10, column=1, padx=pad_x, pady=pad_y)
-    grid_x_entry.insert(0, grid_x)  # Preenche com o valor do config.txt
-    
-    # Localização em Y
-    tk.Label(root, text="Localização em Y:", anchor='w', width=30).grid(row=11, column=0, padx=pad_x, pady=pad_y, sticky='w')
-    grid_y_entry = tk.Entry(root, width=30)
-    grid_y_entry.grid(row=11, column=1, padx=pad_x, pady=pad_y)
-    grid_y_entry.insert(0, grid_y)  # Preenche com o valor do config.txt
-
     # Parâmetros adicionais
     # Percentual mínimo
     tk.Label(root, text="Percentual Mínimo:", anchor='w', width=30).grid(row=12, column=0, padx=pad_x, pady=pad_y, sticky='w')
@@ -329,11 +270,7 @@ def start_application_interface(config_path):
                 result['perc_bottom'],
                 result['min_score'], 
                 result['limit_center'], 
-                result['save_dir'],
-                result['crop_image'],
-                result['square_size'], 
-                result['grid_x'], 
-                result['grid_y']
+                result['save_dir']
     ) 
     
     # Retorna os valores coletados
@@ -347,11 +284,7 @@ def start_application_interface(config_path):
         result['perc_bottom'],
         result['min_score'],
         result['limit_center'],
-        result['save_dir'],
-        result['crop_image'],
-        result['square_size'],
-        result['grid_x'],
-        result['grid_y']
+        result['save_dir']
     )
 
 
@@ -372,11 +305,25 @@ if __name__ == '__main__':
     parent_directory = os.path.dirname(current_directory)   # Diretório pai (pasta acima)
 
     # Iniciar a aplicação
-    #linha, device_name,, device_path, option_visualize = start_application_without_interface()
-    linha, device_name, device_path, camera_backend, option_visualize, perc_top, perc_bottom, \
-            min_score, limit_center, save_dir, cropped_image, square_size, grid_x, grid_y = start_application_interface(config_path)
+    # linha, device_name, device_path, camera_backend, option_visualize, perc_top, perc_bottom, \
+    #         min_score, limit_center, save_dir = start_application_interface(config_path)
 
-    #print(square_size, grid_x, grid_y)
+    linha = '14'
+    device_name = '14'
+    device_path = r'C:/ProjetosPython/PICOS/data/inputs/test_videos/2025-05-29_11-56-33.mp4'
+    camera_backend = 'OpenCV'
+    option_visualize = 1
+    perc_top = 0.5
+    perc_bottom = 0.65
+    min_score = 0.1
+    limit_center = 1
+    save_dir = None
+    deslocamento_esquerda = 780
+    deslocamento_direita = 280
+    box_size = 540
+    box_distance = 820
+    box_offset_x = -120
+
     # Caso seja uma câmera, converter em número
     try:
         device_path = int(device_path)  # Tenta converter para inteiro
@@ -391,6 +338,7 @@ if __name__ == '__main__':
             device = device_config(device_name, device, device_fps, device_width, device_height, device_exposure)
 
         device_start_capture(camera_backend, torch_device, device_name, device, device_fps, type_model, model,
-                              option_visualize, sec_run_model, perc_top, perc_bottom, wait_key, config_path, 
-                              exposure_value, min_score, limit_center, save_dir, linha, cropped_image, square_size, grid_x, grid_y
+                              option_visualize, sec_run_model, perc_top, perc_bottom, deslocamento_esquerda, deslocamento_direita,
+                              box_size, box_distance, box_offset_x, wait_key, config_path, 
+                              exposure_value, min_score, limit_center, save_dir, linha
         )
