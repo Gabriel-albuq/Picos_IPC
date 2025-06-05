@@ -13,8 +13,7 @@ from src.func import (
     device_config,
     device_start,
     device_start_capture,
-    load_model,
-    start_application_interface
+    load_model
 )
 
 def load_settings(config_path):
@@ -25,7 +24,12 @@ def load_settings(config_path):
         'perc_bottom': 0.8,
         'min_score': 0.5,
         'limit_center': 8,
-        'save_dir': 'data\\outputs\\capturas'
+        'save_dir': 'data\\outputs\\capturas',
+        'deslocamento_esquerda': 780,
+        'deslocamento_direita': 280,
+        'box_size': 540,
+        'box_distance': 820,
+        'box_offset_x': -120
     }
 
     try:
@@ -61,13 +65,19 @@ def load_settings(config_path):
         defaults['perc_bottom'],
         defaults['min_score'],
         defaults['limit_center'],
-        defaults['save_dir']
+        defaults['save_dir'],
+        defaults['deslocamento_esquerda'],
+        defaults['deslocamento_direita'],
+        defaults['box_size'],
+        defaults['box_distance'],
+        defaults['box_offset_x'],
     )
 
 
 def save_settings(config_path, perc_top, 
                  perc_bottom, min_score, limit_center, 
-                 save_dir, crop_image, square_size, grid_x, grid_y):
+                 save_dir, deslocamento_esquerda, deslocamento_direita,
+                 box_size, box_distance, box_offset_x):
     """Função para salvar as configurações atuais diretamente nas variáveis no arquivo .txt."""
     arquivo = config_path
     try:
@@ -76,6 +86,11 @@ def save_settings(config_path, perc_top,
             file.write(f'perc_bottom = {perc_bottom}\n')
             file.write(f'min_score = {min_score}\n')
             file.write(f'limit_center = {limit_center}\n')
+            file.write(f'deslocamento_esquerda = {deslocamento_esquerda}\n')
+            file.write(f'deslocamento_direita = {deslocamento_direita}\n')
+            file.write(f'box_size = {box_size}\n')
+            file.write(f'box_distance = {box_distance}\n')
+            file.write(f'box_offset_x = {box_offset_x}\n')
             
             # Verifica se o save_dir não é None antes de salvar
             if save_dir is not None:
@@ -98,7 +113,12 @@ def start_application_interface(config_path):
         'min_score': None,
         'limit_center': None,
         'save_dir': None,
-        'camera_backend': None,  # Novo campo para o backend da câmera
+        'camera_backend': None, 
+        'deslocamento_esquerda': None,
+        'deslocamento_direita': None,
+        'box_size': None,
+        'box_distance': None,
+        'box_offset_x': None,
     }
 
     (
@@ -107,6 +127,11 @@ def start_application_interface(config_path):
         min_score,
         limit_center,
         save_dir,
+        deslocamento_esquerda,
+        deslocamento_direita,
+        box_size,
+        box_distance,
+        box_offset_x,
     ) = load_settings(config_path)
     
     def submit():
@@ -135,6 +160,21 @@ def start_application_interface(config_path):
         if not limit_center_entry.get():
             messagebox.showerror("Erro", "O campo 'Limite de centro' não pode estar vazio.")
             return
+        if not desloc_esq_entry.get():
+            messagebox.showerror("Erro", "O campo 'Deslocamento Esquerda' não pode estar vazio.")
+            return
+        if not desloc_dir_entry.get():
+            messagebox.showerror("Erro", "O campo 'Deslocamento Direita' não pode estar vazio.")
+            return
+        if not box_size_entry.get():
+            messagebox.showerror("Erro", "O campo 'Tamanho da Caixa' não pode estar vazio.")
+            return
+        if not box_distance_entry.get():
+            messagebox.showerror("Erro", "O campo 'Distância entre Caixas' não pode estar vazio.")
+            return
+        if not box_offset_x_entry.get():
+            messagebox.showerror("Erro", "O campo 'Offset Horizontal da Caixa' não pode estar vazio.")
+            return
 
         # Preenche o dicionário result com os valores dos campos
         result['linha'] = linha_entry.get()
@@ -146,6 +186,11 @@ def start_application_interface(config_path):
         result['min_score'] = float(min_score_entry.get())
         result['limit_center'] = int(limit_center_entry.get())
         result['camera_backend'] = camera_backend_var.get()
+        result['deslocamento_esquerda'] = int(desloc_esq_entry.get())
+        result['deslocamento_direita'] = int(desloc_dir_entry.get())
+        result['box_size'] = int(box_size_entry.get())
+        result['box_distance'] = int(box_distance_entry.get())
+        result['box_offset_x'] = int(box_offset_x_entry.get())
         
         # Verifica a opção de salvar detecções
         if not save_detection_var.get():  # Caso "Não salvar detecções" esteja marcado
@@ -233,13 +278,13 @@ def start_application_interface(config_path):
 
     # Parâmetros adicionais
     # Percentual mínimo
-    tk.Label(root, text="Percentual Mínimo:", anchor='w', width=30).grid(row=12, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    tk.Label(root, text="Percentual Trigger Superior:", anchor='w', width=30).grid(row=12, column=0, padx=pad_x, pady=pad_y, sticky='w')
     perc_top_entry = tk.Entry(root, width=30)
     perc_top_entry.grid(row=12, column=1, padx=pad_x, pady=pad_y)
     perc_top_entry.insert(0, perc_top)  # Preenche com o valor do config.txt
     
     # Percentual máximo
-    tk.Label(root, text="Percentual Máximo:", anchor='w', width=30).grid(row=13, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    tk.Label(root, text="Percentual Trigger Inferior    :", anchor='w', width=30).grid(row=13, column=0, padx=pad_x, pady=pad_y, sticky='w')
     perc_bottom_entry = tk.Entry(root, width=30)
     perc_bottom_entry.grid(row=13, column=1, padx=pad_x, pady=pad_y)
     perc_bottom_entry.insert(0, perc_bottom)  # Preenche com o valor do config.txt
@@ -255,9 +300,39 @@ def start_application_interface(config_path):
     limit_center_entry = tk.Entry(root, width=30)
     limit_center_entry.grid(row=15, column=1, padx=pad_x, pady=pad_y)
     limit_center_entry.insert(0, limit_center)  # Preenche com o valor do config.txt
-    
+
+    # Deslocamento esquerda
+    tk.Label(root, text="Deslocamento Esquerda:", anchor='w', width=30).grid(row=16, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    desloc_esq_entry = tk.Entry(root, width=30)
+    desloc_esq_entry.grid(row=16, column=1, padx=pad_x, pady=pad_y)
+    desloc_esq_entry.insert(0, deslocamento_esquerda) 
+
+    # Deslocamento direita
+    tk.Label(root, text="Deslocamento Direita:", anchor='w', width=30).grid(row=17, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    desloc_dir_entry = tk.Entry(root, width=30)
+    desloc_dir_entry.grid(row=17, column=1, padx=pad_x, pady=pad_y)
+    desloc_dir_entry.insert(0, deslocamento_direita) 
+
+    # Tamanho da caixa (box_size)
+    tk.Label(root, text="Tamanho da Caixa (box_size):", anchor='w', width=30).grid(row=18, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    box_size_entry = tk.Entry(root, width=30)
+    box_size_entry.grid(row=18, column=1, padx=pad_x, pady=pad_y)
+    box_size_entry.insert(0, box_size) 
+
+    # Distância da caixa (box_distance)
+    tk.Label(root, text="Distância entre Caixas (box_distance):", anchor='w', width=30).grid(row=19, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    box_distance_entry = tk.Entry(root, width=30)
+    box_distance_entry.grid(row=19, column=1, padx=pad_x, pady=pad_y)
+    box_distance_entry.insert(0, box_distance) 
+
+    # Offset X da caixa (box_offset_x)
+    tk.Label(root, text="Offset Horizontal (box_offset_x):", anchor='w', width=30).grid(row=20, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    box_offset_x_entry = tk.Entry(root, width=30)
+    box_offset_x_entry.grid(row=20, column=1, padx=pad_x, pady=pad_y)
+    box_offset_x_entry.insert(0, box_offset_x) 
+        
     # Botão de confirmação
-    tk.Button(root, text="Confirmar", command=submit, width=20).grid(row=16, column=0, columnspan=4, pady=10)
+    tk.Button(root, text="Confirmar", command=submit, width=20).grid(row=21, column=0, columnspan=4, pady=10)
     
     # Chama a função para ajustar o estado do diretório de salvar
     toggle_save_dir()
@@ -270,7 +345,12 @@ def start_application_interface(config_path):
                 result['perc_bottom'],
                 result['min_score'], 
                 result['limit_center'], 
-                result['save_dir']
+                result['save_dir'],
+                result['deslocamento_esquerda'],
+                result['deslocamento_direita'],
+                result['box_size'],
+                result['box_distance'],
+                result['box_offset_x']
     ) 
     
     # Retorna os valores coletados
@@ -284,7 +364,12 @@ def start_application_interface(config_path):
         result['perc_bottom'],
         result['min_score'],
         result['limit_center'],
-        result['save_dir']
+        result['save_dir'],
+        result['deslocamento_esquerda'],
+        result['deslocamento_direita'],
+        result['box_size'],
+        result['box_distance'],
+        result['box_offset_x']
     )
 
 
@@ -304,19 +389,34 @@ if __name__ == '__main__':
     current_directory = os.path.dirname(os.path.abspath(__file__))   # Diretório atual
     parent_directory = os.path.dirname(current_directory)   # Diretório pai (pasta acima)
 
+    
+    (
+        perc_top,
+        perc_bottom,
+        min_score,
+        limit_center,
+        save_dir,
+        deslocamento_esquerda,
+        deslocamento_direita,
+        box_size,
+        box_distance,
+        box_offset_x,
+    ) = load_settings(config_path)
+
     # Iniciar a aplicação
     # linha, device_name, device_path, camera_backend, option_visualize, perc_top, perc_bottom, \
-    #         min_score, limit_center, save_dir = start_application_interface(config_path)
+    #         min_score, limit_center, save_dir, deslocamento_esquerda, deslocamento_direita, \
+    #         box_size, box_distance, box_offset_x = start_application_interface(config_path)
 
     linha = '14'
     device_name = '14'
-    device_path = r'C:/ProjetosPython/PICOS/data/inputs/test_videos/2025-05-29_11-56-33.mp4'
+    device_path = r'C:/ProjetosPython/PICOS/data/inputs/test_videos/2025-06-04_09-50-53.mp4'
     camera_backend = 'OpenCV'
     option_visualize = 1
     perc_top = 0.5
     perc_bottom = 0.65
-    min_score = 0.1
-    limit_center = 1
+    min_score = 0.4
+    limit_center = 8
     save_dir = None
     deslocamento_esquerda = 780
     deslocamento_direita = 280
