@@ -2,7 +2,7 @@
 import numpy as np
 
 
-def rules_detection(frame, detections_sorted, perc_top, perc_bottom, min_score, limit_center):
+def rules_detection(frame, detections_sorted, perc_top, perc_bottom, perc_median, min_score, limit_center):
     height, width = frame.shape[:2]
 
     # Define as posições das linhas
@@ -10,8 +10,8 @@ def rules_detection(frame, detections_sorted, perc_top, perc_bottom, min_score, 
     line_limit_bottom = int(height * perc_bottom)   # Só conta quando a mediana entrar nesse range
     dif_limit = line_limit_bottom - line_limit_top
 
-    line_top_detect = None  # É calculada a mediana das detecções, e só são contados biscoitos que estão naquela mediana + - um valor de range
-    line_bottom_detect = None   # É calculada a mediana das detecções, e só são contados biscoitos que estão naquela mediana + - um valor de range
+    line_top_median = None  # É calculada a mediana das detecções, e só são contados biscoitos que estão naquela mediana + - um valor de range
+    line_bottom_median = None   # É calculada a mediana das detecções, e só são contados biscoitos que estão naquela mediana + - um valor de range
 
     # Lista para armazenar centros de detecções
     centers = []
@@ -34,8 +34,8 @@ def rules_detection(frame, detections_sorted, perc_top, perc_bottom, min_score, 
 
     if all_centers_y:
         median_y = int(np.median(all_centers_y))  # Obtém a mediana
-        line_bottom_detect = int(median_y + int(dif_limit / 2))
-        line_top_detect = int(median_y - int(dif_limit / 2))
+        line_bottom_median = int(median_y + int((height * perc_median) / 2))
+        line_top_median = int(median_y - int((height * perc_median) / 2))
         
         cv2.line(
             frame, 
@@ -59,7 +59,7 @@ def rules_detection(frame, detections_sorted, perc_top, perc_bottom, min_score, 
             test_score = score > min_score   # Verifica score da deteccao
             test_center = not any(np.linalg.norm(np.array([center_x, center_y]) - np.array(center))< limit_center for center in centers)   # Verifica se está próximo de algum centro
             test_center_x = not any(abs(center_x - center[0]) < limit_center for center in centers)   # Verifica se está próximo de algum x dos centros
-            test_median = (y_max > line_top_detect and y_min < line_bottom_detect)   # Verifica se está na mediana +- range
+            test_median = (y_max > line_top_median and y_min < line_bottom_median)   # Verifica se está na mediana +- range
 
             if test_score and test_center and test_median:
                 total_detections += 1
@@ -67,54 +67,14 @@ def rules_detection(frame, detections_sorted, perc_top, perc_bottom, min_score, 
 
                 centers.append((center_x, center_y))  # Adiciona o centro à lista
 
-                cv2.circle(
-                    frame, 
-                    (center_x, center_y), 
-                    7, 
-                    (0, 0, 255), 
-                    -1,
-                )   # Desenhar uma bolinha (círculo) no centro
+                cv2.circle(frame, (center_x, center_y), 7, (0, 0, 255), -1,)   # Desenhar uma bolinha (círculo) no centro
+                cv2.circle(frame, (center_x, center_y), limit_center, (255, 0, 0), 1,)  # Círculo vermelho de limite
+                cv2.putText(frame,str(total_detections),(center_x - 6, center_y + 3),cv2.FONT_HERSHEY_SIMPLEX,0.35,(255, 255, 255),1,)   # Colocar o número da marcação dentro da bolinha
 
-                cv2.circle(
-                    frame, 
-                    (center_x, center_y), 
-                    limit_center, 
-                    (255, 0, 0), 
-                    1,
-                )  # Círculo vermelho de limite
+    cv2.rectangle(frame, (0, 0), (frame.shape[1], 40), (80, 43, 30), -1)
 
-                cv2.putText(
-                    frame,
-                    str(total_detections),
-                    (center_x - 6, center_y + 3),
-                    cv2.FONT_HERSHEY_SIMPLEX,0.35,(255, 255, 255),
-                    1,
-                )   # Colocar o número da marcação dentro da bolinha
-
-    cv2.rectangle(
-        frame, 
-        (0, 0), 
-        (frame.shape[1], 40), 
-        (80, 43, 30), 
-        -1,
-    )
-
-    cv2.line(
-        frame, 
-        (640, line_top_detect), 
-        (640 + 640, line_top_detect), 
-        (255, 0, 0), 
-        2,
-
-    )
-    cv2.line(
-        frame,
-        (640,
-         line_bottom_detect),
-         (640 + 640, line_bottom_detect),
-         (255, 0, 0),
-         2,
-    )
+    cv2.line(frame, (0, line_top_median), (640 + 640, line_top_median), (255, 0, 0), 2)
+    cv2.line(frame,(0, line_bottom_median), (640 + 640, line_bottom_median), (255, 0, 0), 2)
 
     text_position = (0, 0)
     text = f'Total de Biscoitos: {total_detections}'
@@ -124,15 +84,8 @@ def rules_detection(frame, detections_sorted, perc_top, perc_bottom, min_score, 
     (text_width, text_height), _ = cv2.getTextSize(text, font, font_scale, thickness)
     text_x = 10  # margem esquerda
     text_y = int((40 + text_height) / 2)  # centralizado verticalmente
-    cv2.putText(
-        frame, 
-        text, 
-        (text_x, text_y), 
-        font, 
-        font_scale, 
-        (255, 255, 255), 
-        thickness,
-    )
+    
+    cv2.putText(frame, text, (text_x, text_y), font, font_scale, (255, 255, 255), thickness)
 
     return frame, total_detections
 

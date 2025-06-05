@@ -1,6 +1,6 @@
 ﻿"""Funcoes auxiliares"""
 
-from .picos_device import device_config, device_start, device_start_capture
+from .picos_device import device_config, device_start, device_start_capture, device_start_capture_multiples
 from .picos_load_model import load_model
 from .picos_rules_detection import rules_detection
 from .picos_run_model import run_model

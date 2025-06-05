@@ -13,6 +13,7 @@ from src.func import (
     device_config,
     device_start,
     device_start_capture,
+    device_start_capture_multiples,
     load_model
 )
 
@@ -22,6 +23,7 @@ def load_settings(config_path):
     defaults = {
         'perc_top': 0.4,
         'perc_bottom': 0.8,
+        'perc_median': 0.3,
         'min_score': 0.5,
         'limit_center': 8,
         'save_dir': 'data\\outputs\\capturas',
@@ -63,6 +65,7 @@ def load_settings(config_path):
     return (
         defaults['perc_top'],
         defaults['perc_bottom'],
+        defaults['perc_median'],
         defaults['min_score'],
         defaults['limit_center'],
         defaults['save_dir'],
@@ -84,6 +87,7 @@ def save_settings(config_path, perc_top,
         with open(arquivo, 'w') as file:
             file.write(f'perc_top = {perc_top}\n')
             file.write(f'perc_bottom = {perc_bottom}\n')
+            file.write(f'perc_median = {perc_median}\n')
             file.write(f'min_score = {min_score}\n')
             file.write(f'limit_center = {limit_center}\n')
             file.write(f'deslocamento_esquerda = {deslocamento_esquerda}\n')
@@ -110,6 +114,7 @@ def start_application_interface(config_path):
         'option_visualize': None,
         'perc_top': None,
         'perc_bottom': None,
+        'perc_median': None,
         'min_score': None,
         'limit_center': None,
         'save_dir': None,
@@ -124,6 +129,7 @@ def start_application_interface(config_path):
     (
         perc_top,
         perc_bottom,
+        perc_median,
         min_score,
         limit_center,
         save_dir,
@@ -151,6 +157,8 @@ def start_application_interface(config_path):
         if not perc_top_entry.get():
             messagebox.showerror("Erro", "O campo 'Percentual Mínimo' não pode estar vazio.")
             return
+        if not perc_median_entry.get():
+            messagebox.showerror("Erro", "O campo 'Percentual da Mediana' não pode estar vazio.")
         if not perc_bottom_entry.get():
             messagebox.showerror("Erro", "O campo 'Percentual Máximo' não pode estar vazio.")
             return
@@ -183,6 +191,7 @@ def start_application_interface(config_path):
         result['option_visualize'] = int(option_var.get())
         result['perc_top'] = float(perc_top_entry.get())
         result['perc_bottom'] = float(perc_bottom_entry.get())
+        result['perc_median'] = float(perc_median_entry.get())
         result['min_score'] = float(min_score_entry.get())
         result['limit_center'] = int(limit_center_entry.get())
         result['camera_backend'] = camera_backend_var.get()
@@ -223,116 +232,141 @@ def start_application_interface(config_path):
     # Configuração do layout
     pad_x = 10
     pad_y = 5
+
+    row = -1
     
     # Entrada para a linha
-    tk.Label(root, text="Digite a linha:", anchor='w', width=30).grid(row=0, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    row+=1
+    tk.Label(root, text="Digite a linha:", anchor='w', width=30).grid(row=row, column=0, padx=pad_x, pady=pad_y, sticky='w')
     linha_entry = tk.Entry(root, width=30)
-    linha_entry.grid(row=0, column=1, padx=pad_x, pady=pad_y)
+    linha_entry.grid(row=row, column=1, padx=pad_x, pady=pad_y)
     
     # Entrada para o nome da câmera/vídeo
-    tk.Label(root, text="Nome da Câmera/Vídeo:", anchor='w', width=30).grid(row=1, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    row+=1
+    tk.Label(root, text="Nome da Câmera/Vídeo:", anchor='w', width=30).grid(row=row, column=0, padx=pad_x, pady=pad_y, sticky='w')
     device_name_entry = tk.Entry(root, width=30)
-    device_name_entry.grid(row=1, column=1, padx=pad_x, pady=pad_y)
+    device_name_entry.grid(row=row, column=1, padx=pad_x, pady=pad_y)
     
     # Entrada para o caminho do dispositivo
-    tk.Label(root, text="Câmera/Vídeo:", anchor='w', width=30).grid(row=2, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    row+=1
+    tk.Label(root, text="Câmera/Vídeo:", anchor='w', width=30).grid(row=row, column=0, padx=pad_x, pady=pad_y, sticky='w')
     device_path_var = tk.StringVar()
     device_path_entry = tk.Entry(root, textvariable=device_path_var, width=30)
-    device_path_entry.grid(row=2, column=1, padx=pad_x, pady=pad_y)
+    device_path_entry.grid(row=row, column=1, padx=pad_x, pady=pad_y)
     
     # Botão para procurar um arquivo de vídeo
-    tk.Button(root, text="Procurar", command=browse_file, width=10).grid(row=2, column=2, padx=pad_x, pady=pad_y)
+    tk.Button(root, text="Procurar", command=browse_file, width=10).grid(row=row, column=2, padx=pad_x, pady=pad_y)
     
     # Seleção de backend da câmera
-    tk.Label(root, text="Backend da Câmera:", anchor='w', width=30).grid(row=3, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    row+=1
+    tk.Label(root, text="Backend da Câmera:", anchor='w', width=30).grid(row=row, column=0, padx=pad_x, pady=pad_y, sticky='w')
     camera_backend_var = tk.StringVar(value="")
     frame_backend = tk.Frame(root)
-    frame_backend.grid(row=3, column=1, padx=pad_x, pady=pad_y, sticky='w')
+    frame_backend.grid(row=row, column=1, padx=pad_x, pady=pad_y, sticky='w')
     tk.Radiobutton(frame_backend, text="OpenCV", variable=camera_backend_var, value="OpenCV").pack(side='left')
     tk.Radiobutton(frame_backend, text="GxCam", variable=camera_backend_var, value="GxCam").pack(side='left')
     
     # Opção de visualização
-    tk.Label(root, text="Visualizar predições:", anchor='w', width=30).grid(row=4, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    row+=1
+    tk.Label(root, text="Visualizar predições:", anchor='w', width=30).grid(row=row, column=0, padx=pad_x, pady=pad_y, sticky='w')
     option_var = tk.StringVar(value=1)
     frame_options = tk.Frame(root)
-    frame_options.grid(row=4, column=1, padx=pad_x, pady=pad_y, sticky='w')
+    frame_options.grid(row=row, column=1, padx=pad_x, pady=pad_y, sticky='w')
     tk.Radiobutton(frame_options, text="Sim", variable=option_var, value="1").pack(side='left')
     tk.Radiobutton(frame_options, text="Não", variable=option_var, value="0").pack(side='left')
     
     # Diretório de salvar
-    tk.Label(root, text="Salvar detecções em:", anchor='w', width=30).grid(row=5, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    row+=1
+    tk.Label(root, text="Salvar detecções em:", anchor='w', width=30).grid(row=row, column=0, padx=pad_x, pady=pad_y, sticky='w')
     save_dir_var = tk.StringVar()
     save_dir_entry = tk.Entry(root, textvariable=save_dir_var, width=30)
-    save_dir_entry.grid(row=5, column=1, padx=pad_x, pady=pad_y)
+    save_dir_entry.grid(row=row, column=1, padx=pad_x, pady=pad_y)
 
     save_dir_var.set(save_dir)  # Preenche com o valor do config.txt
-    tk.Button(root, text="Procurar", command=browse_save_dir, width=10).grid(row=5, column=2, padx=pad_x, pady=pad_y)
+    tk.Button(root, text="Procurar", command=browse_save_dir, width=10).grid(row=row, column=2, padx=pad_x, pady=pad_y)
 
     # Caminho padrão abaixo do campo
-    tk.Label(root, text="Caminho Padrão: data\\outputs\\capturas", anchor='w', width=30).grid(row=6, column=1, padx=pad_x, pady=pad_y, sticky='w')
+    row+=1
+    tk.Label(root, text="Caminho Padrão: data\\outputs\\capturas", anchor='w', width=30).grid(row=row, column=1, padx=pad_x, pady=pad_y, sticky='w')
 
     # Opção para "Não salvar detecções" (agora com valor padrão marcado)
     save_detection_var = tk.BooleanVar(value=True)  # Agora inicia como True (marcado)
     save_detection_checkbox = tk.Checkbutton(root, text="Não salvar detecções", variable=save_detection_var, command=toggle_save_dir)
-    save_detection_checkbox.grid(row=7, column=1, padx=pad_x, pady=pad_y, sticky='w')
+    save_detection_checkbox.grid(row=row, column=1, padx=pad_x, pady=pad_y, sticky='w')
 
     # Parâmetros adicionais
     # Percentual mínimo
-    tk.Label(root, text="Percentual Trigger Superior:", anchor='w', width=30).grid(row=12, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    row+=1
+    tk.Label(root, text="Percentual Trigger Superior:", anchor='w', width=30).grid(row=row, column=0, padx=pad_x, pady=pad_y, sticky='w')
     perc_top_entry = tk.Entry(root, width=30)
-    perc_top_entry.grid(row=12, column=1, padx=pad_x, pady=pad_y)
+    perc_top_entry.grid(row=row, column=1, padx=pad_x, pady=pad_y)
     perc_top_entry.insert(0, perc_top)  # Preenche com o valor do config.txt
     
     # Percentual máximo
-    tk.Label(root, text="Percentual Trigger Inferior    :", anchor='w', width=30).grid(row=13, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    row+=1
+    tk.Label(root, text="Percentual Trigger Inferior    :", anchor='w', width=30).grid(row=row, column=0, padx=pad_x, pady=pad_y, sticky='w')
     perc_bottom_entry = tk.Entry(root, width=30)
-    perc_bottom_entry.grid(row=13, column=1, padx=pad_x, pady=pad_y)
+    perc_bottom_entry.grid(row=row, column=1, padx=pad_x, pady=pad_y)
     perc_bottom_entry.insert(0, perc_bottom)  # Preenche com o valor do config.txt
+
+    # Percentual mediana
+    row+=1
+    tk.Label(root, text="Percentual da Mediana    :", anchor='w', width=30).grid(row=row, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    perc_median_entry = tk.Entry(root, width=30)
+    perc_median_entry.grid(row=row, column=1, padx=pad_x, pady=pad_y)
+    perc_median_entry.insert(0, perc_median)  # Preenche com o valor do config.txt
     
     # Score mínimo
-    tk.Label(root, text="Score Mínimo:", anchor='w', width=30).grid(row=14, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    row+=1
+    tk.Label(root, text="Score Mínimo:", anchor='w', width=30).grid(row=row, column=0, padx=pad_x, pady=pad_y, sticky='w')
     min_score_entry = tk.Entry(root, width=30)
-    min_score_entry.grid(row=14, column=1, padx=pad_x, pady=pad_y)
+    min_score_entry.grid(row=row, column=1, padx=pad_x, pady=pad_y)
     min_score_entry.insert(0, min_score)  # Preenche com o valor do config.txt
     
     # Limite de centro
-    tk.Label(root, text="Limite de centro:", anchor='w', width=30).grid(row=15, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    row+=1
+    tk.Label(root, text="Limite de centro:", anchor='w', width=30).grid(row=row, column=0, padx=pad_x, pady=pad_y, sticky='w')
     limit_center_entry = tk.Entry(root, width=30)
-    limit_center_entry.grid(row=15, column=1, padx=pad_x, pady=pad_y)
+    limit_center_entry.grid(row=row, column=1, padx=pad_x, pady=pad_y)
     limit_center_entry.insert(0, limit_center)  # Preenche com o valor do config.txt
 
     # Deslocamento esquerda
-    tk.Label(root, text="Deslocamento Esquerda:", anchor='w', width=30).grid(row=16, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    row+=1
+    tk.Label(root, text="Deslocamento Esquerda:", anchor='w', width=30).grid(row=row, column=0, padx=pad_x, pady=pad_y, sticky='w')
     desloc_esq_entry = tk.Entry(root, width=30)
-    desloc_esq_entry.grid(row=16, column=1, padx=pad_x, pady=pad_y)
+    desloc_esq_entry.grid(row=row, column=1, padx=pad_x, pady=pad_y)
     desloc_esq_entry.insert(0, deslocamento_esquerda) 
 
     # Deslocamento direita
-    tk.Label(root, text="Deslocamento Direita:", anchor='w', width=30).grid(row=17, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    row+=1
+    tk.Label(root, text="Deslocamento Direita:", anchor='w', width=30).grid(row=row, column=0, padx=pad_x, pady=pad_y, sticky='w')
     desloc_dir_entry = tk.Entry(root, width=30)
-    desloc_dir_entry.grid(row=17, column=1, padx=pad_x, pady=pad_y)
+    desloc_dir_entry.grid(row=row, column=1, padx=pad_x, pady=pad_y)
     desloc_dir_entry.insert(0, deslocamento_direita) 
 
     # Tamanho da caixa (box_size)
-    tk.Label(root, text="Tamanho da Caixa (box_size):", anchor='w', width=30).grid(row=18, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    row+=1
+    tk.Label(root, text="Tamanho da Caixa (box_size):", anchor='w', width=30).grid(row=row, column=0, padx=pad_x, pady=pad_y, sticky='w')
     box_size_entry = tk.Entry(root, width=30)
-    box_size_entry.grid(row=18, column=1, padx=pad_x, pady=pad_y)
+    box_size_entry.grid(row=row, column=1, padx=pad_x, pady=pad_y)
     box_size_entry.insert(0, box_size) 
 
     # Distância da caixa (box_distance)
-    tk.Label(root, text="Distância entre Caixas (box_distance):", anchor='w', width=30).grid(row=19, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    row+=1
+    tk.Label(root, text="Distância entre Caixas (box_distance):", anchor='w', width=30).grid(row=row, column=0, padx=pad_x, pady=pad_y, sticky='w')
     box_distance_entry = tk.Entry(root, width=30)
-    box_distance_entry.grid(row=19, column=1, padx=pad_x, pady=pad_y)
+    box_distance_entry.grid(row=row, column=1, padx=pad_x, pady=pad_y)
     box_distance_entry.insert(0, box_distance) 
 
     # Offset X da caixa (box_offset_x)
-    tk.Label(root, text="Offset Horizontal (box_offset_x):", anchor='w', width=30).grid(row=20, column=0, padx=pad_x, pady=pad_y, sticky='w')
+    row+=1
+    tk.Label(root, text="Offset Horizontal (box_offset_x):", anchor='w', width=30).grid(row=row, column=0, padx=pad_x, pady=pad_y, sticky='w')
     box_offset_x_entry = tk.Entry(root, width=30)
-    box_offset_x_entry.grid(row=20, column=1, padx=pad_x, pady=pad_y)
+    box_offset_x_entry.grid(row=row, column=1, padx=pad_x, pady=pad_y)
     box_offset_x_entry.insert(0, box_offset_x) 
         
     # Botão de confirmação
-    tk.Button(root, text="Confirmar", command=submit, width=20).grid(row=21, column=0, columnspan=4, pady=10)
+    tk.Button(root, text="Confirmar", command=submit, width=20).grid(row=row, column=0, columnspan=4, pady=10)
     
     # Chama a função para ajustar o estado do diretório de salvar
     toggle_save_dir()
@@ -343,6 +377,7 @@ def start_application_interface(config_path):
     save_settings(config_path, 
                 result['perc_top'], 
                 result['perc_bottom'],
+                result['perc_median'],
                 result['min_score'], 
                 result['limit_center'], 
                 result['save_dir'],
@@ -362,6 +397,7 @@ def start_application_interface(config_path):
         result['option_visualize'],
         result['perc_top'],
         result['perc_bottom'],
+        result['perc_median'],
         result['min_score'],
         result['limit_center'],
         result['save_dir'],
@@ -393,6 +429,7 @@ if __name__ == '__main__':
     (
         perc_top,
         perc_bottom,
+        perc_median,
         min_score,
         limit_center,
         save_dir,
@@ -415,9 +452,10 @@ if __name__ == '__main__':
     option_visualize = 1
     perc_top = 0.5
     perc_bottom = 0.65
+    perc_median = 0.3
     min_score = 0.4
     limit_center = 8
-    save_dir = None
+    save_dir = 'data\\outputs\\capturas'
     deslocamento_esquerda = 780
     deslocamento_direita = 280
     box_size = 540
@@ -437,8 +475,8 @@ if __name__ == '__main__':
         if camera_backend == "OpenCV":
             device = device_config(device_name, device, device_fps, device_width, device_height, device_exposure)
 
-        device_start_capture(camera_backend, torch_device, device_name, device, device_fps, type_model, model,
-                              option_visualize, sec_run_model, perc_top, perc_bottom, deslocamento_esquerda, deslocamento_direita,
+        device_start_capture_multiples(camera_backend, torch_device, device_name, device, device_fps, type_model, model,
+                              option_visualize, sec_run_model, perc_top, perc_bottom, perc_median, deslocamento_esquerda, deslocamento_direita,
                               box_size, box_distance, box_offset_x, wait_key, config_path, 
                               exposure_value, min_score, limit_center, save_dir, linha
         )

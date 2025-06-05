@@ -2,6 +2,7 @@
 import os
 import time
 from datetime import datetime
+import math
 
 import cv2
 import numpy as np
@@ -61,8 +62,41 @@ def calculate_fps_video(frame_count, start_time_fps):
     return fps_display
 
 
+def detectar_slugs(frame):
+    frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+    limite_inferior_marrom_escuro = np.array([0, 50, 20])     # Marrom mais escuro
+    limite_superior_marrom_escuro = np.array([20, 255, 200])  # Marrom médio
+    
+    limite_inferior_marrom_claro = np.array([10, 30, 40])      # Marrom claro
+    limite_superior_marrom_claro = np.array([25, 150, 255])   # Marrom muito claro
+
+    # Cria máscaras para ambas as faixas de marrom
+    mascara_marrom_escuro = cv2.inRange(frame_hsv, limite_inferior_marrom_escuro, limite_superior_marrom_escuro)
+    mascara_marrom_claro = cv2.inRange(frame_hsv, limite_inferior_marrom_claro, limite_superior_marrom_claro)
+
+    # Combina as máscaras
+    mascara_combinada = cv2.bitwise_or(mascara_marrom_escuro, mascara_marrom_claro)
+
+    # Operações morfológicas para melhorar a máscara
+    kernel = np.ones((5,5), np.uint8)
+    mascara_combinada = cv2.morphologyEx(mascara_combinada, cv2.MORPH_CLOSE, kernel)  # Fecha pequenos buracos
+    mascara_combinada = cv2.morphologyEx(mascara_combinada, cv2.MORPH_OPEN, kernel)   # Remove ruídos
+
+    # Encontrar contornos na máscara combinada
+    contornos, _ = cv2.findContours(mascara_combinada, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    contornos_filtrados = []
+    for contorno in contornos:
+        area = cv2.contourArea(contorno)
+        x, y, w, h = cv2.boundingRect(contorno)
+        if area > 100 and w > 150:
+            contornos_filtrados.append(contorno)
+
+    return contornos_filtrados
+
 def device_start_capture(camera_backend, torch_device, device_name, device, device_fps, type_model, 
-                         model, visualize, sec_run_model, perc_top, perc_bottom, deslocamento_esquerda, deslocamento_direita, 
+                         model, visualize, sec_run_model, perc_top, perc_bottom, perc_median, deslocamento_esquerda, deslocamento_direita, 
                          box_size, box_distance, box_offset_x,  wait_key,
                          config_path, exposure_value, min_score, limit_center, save_dir, linha):
     
@@ -239,23 +273,24 @@ def device_start_capture(camera_backend, torch_device, device_name, device, devi
 
                     # Esquerda
                     detections_sorted_left = run_model(torch_device, type_model, model, frame_left)
-                    frame_detect_left, total_detections_left = rules_detection(frame_left.copy(), detections_sorted_left, 0, 1,
-                                                                    min_score, limit_center)
+                    frame_detect_left, total_detections_left = rules_detection(frame_left.copy(), detections_sorted_left, 0, 1, perc_median,
+                                                                    min_score, limit_center) # 0 e 1 porque nao estou fazendo com a imagem já cortada
 
                     # Direita
                     detections_sorted_right = run_model(torch_device, type_model, model, frame_right)
-                    frame_detect_right, total_detections_right = rules_detection(frame_right.copy(), detections_sorted_right, 0, 1,
-                                                                    min_score, limit_center)
+                    frame_detect_right, total_detections_right = rules_detection(frame_right.copy(), detections_sorted_right, 0, 1, perc_median,
+                                                                    min_score, limit_center) # 0 e 1 porque nao estou fazendo com a imagem já cortada
 
                     total_detections = total_detections_left + total_detections_right
 
+                    id_image = ''
                     if total_detections > 0:
                         if visualize == 1:
                             cv2.imshow(f'Aplicacao do Modelo no Lado Esquerdo: {device_name}', frame_detect_left)
                             cv2.imshow(f'Aplicacao do Modelo no Lado Direito: {device_name}', frame_detect_right)
                         if save_dir:
-                            save_frame(frame_left, frame_detect_left, linha, data_hora_trigger, total_detections_left, save_dir)
-                            save_frame(frame_right, frame_detect_right, linha, data_hora_trigger, total_detections_right, save_dir)
+                            save_frame(frame_left, frame_detect_left, linha, id_image, data_hora_trigger, total_detections_left, save_dir)
+                            save_frame(frame_right, frame_detect_right, linha, id_image, data_hora_trigger, total_detections_right, save_dir)
 
                     end_time = time.time()  # Fim da medição de tempo
                     processing_time = end_time - start_time
@@ -285,14 +320,281 @@ def device_start_capture(camera_backend, torch_device, device_name, device, devi
     cv2.destroyAllWindows()
 
 
-def save_frame(frame_original, frame_detection, linha, data_hora_atual,
+def device_start_capture_multiples(camera_backend, torch_device, device_name, device, device_fps, type_model, 
+                         model, visualize, sec_run_model, perc_top, perc_bottom, perc_median, deslocamento_esquerda, deslocamento_direita, 
+                         box_size, box_distance, box_offset_x,  wait_key,
+                         config_path, exposure_value, min_score, limit_center, save_dir, linha):
+    
+    frame_delay = int(device_fps * sec_run_model)  # Número de quadros para rodar o modelo
+
+    start_process = 'ON'
+    frame_count = 0
+    time_run_model = 0
+    count_trigger = 0
+    wait_trigger_off = True
+    start_time_fps = time.time()
+    restart_return_camera = True
+    return_camera = None
+    device_width = int(device.get(cv2.CAP_PROP_FRAME_WIDTH))
+    device_height = int(device.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    # Configurações do tracker
+    DISTANCIA_MAX_ASSOCIACAO = 200  # pixels
+    MAX_FRAMES_SEM_DETECCAO = 10    # número de frames sem detecção antes de remover
+    MIN_AREA = 100                  # área mínima para considerar um objeto
+    MIN_LARGURA = 150               # largura mínima para considerar um objeto
+
+    # Estrutura para armazenar objetos rastreados
+    objetos_rastreados = {}  # Formato: {id: {'bbox': (x,y,w,h), 'historia': [(x,y)], 'frames_sem_detecao': int, 'total_detections': int}}
+    proximo_id = 1
+
+    print(f"\nAbrindo câmera '{device_name}'...")
+    while True:
+        frame_count += 1
+        # Para cada objeto existente, marque como não detectado neste frame
+        for obj_id in list(objetos_rastreados.keys()):
+            objetos_rastreados[obj_id]['detectado_este_frame'] = False
+
+        # Verifica se a imagem capturada da câmera mudou de estado V > F ou F > V, caso sim printa um aviso e exibe a imagem
+        if device is not None:
+            if return_camera != True:
+                restart_return_camera = True
+
+            # Capturar a imagem
+            if camera_backend == "OpenCV":
+                return_camera, frame_original = device.read()
+            if camera_backend == "GxCam":
+                return_camera, frame_original = device.read()  
+
+            if restart_return_camera == True:
+                restart_return_camera = False
+                print(f"Imagem da câmera '{device_name}' capturada.")
+                print('Captura desligada')
+                print('-----------------------------------')
+
+        else:
+            if return_camera != False:
+                restart_return_camera = True
+
+            return_camera, frame_original = False, np.zeros((device_width, device_height, 3), dtype=np.uint8)  # Frame preto para câmera 1
+
+            if restart_return_camera == True:
+                restart_return_camera = False
+                print(f"Falha ao capturar imagem da câmera '{device_name}'.")
+
+        # Adiciona padding de 20 pixels (preto) ao redor da imagem
+        padding = 50
+        frame_original = cv2.copyMakeBorder(
+            frame_original,
+            top=padding,
+            bottom=padding,
+            left=padding,
+            right=padding,
+            borderType=cv2.BORDER_CONSTANT,
+            value=[0, 0, 0]  # Cor preta (BGR)
+        )
+
+        altura, largura = frame_original.shape[:2]
+
+        # Detectar slugs
+        contornos = detectar_slugs(frame_original.copy())
+        
+        # Cópia da imagem original
+        frame_marcado = frame_original.copy()
+        altura, largura = frame_original.shape[:2]
+
+        padding = 20
+        margem_borda = 10
+        contador = 1
+
+        slugs_atuais = []
+        for contorno in contornos:
+            contador += 1
+
+            area = cv2.contourArea(contorno)
+            x, y, w, h = cv2.boundingRect(contorno)
+            lado = max(w, h)
+
+            centro_x = x + w // 2
+            centro_y = y + h // 2
+
+            lado_com_padding = lado + 2 * padding
+
+            # Recalcula coordenadas com padding centralizado
+            novo_x_pad = max(centro_x - lado_com_padding // 2, 0)
+            novo_y_pad = max(centro_y - lado_com_padding // 2, 0)
+            fim_x_pad = min(centro_x + lado_com_padding // 2, largura)
+            fim_y_pad = min(centro_y + lado_com_padding // 2, altura)
+
+            # Ajusta para manter dentro dos limites da imagem
+            lado_pad = min(fim_x_pad - novo_x_pad, fim_y_pad - novo_y_pad)
+
+            # Define as bounding boxes
+            bbox_atual = (novo_x_pad, novo_y_pad, lado_pad, lado_pad)
+            bbox_sem_padding = (centro_x - lado // 2, centro_y - lado // 2, lado, lado)
+
+            if novo_y_pad < 20 or fim_y_pad > altura - 20:
+                continue  # Ignora essa marcação
+
+            # Adiciona à lista de detecções atuais
+            slugs_atuais.append({
+                'bbox': bbox_atual,
+                'bbox_sem_padding': bbox_sem_padding,
+                'centro': (centro_x, centro_y)
+            })
+
+            for slug in slugs_atuais:
+                bbox_atual = slug['bbox']
+                centro_atual = slug['centro']
+                
+                objeto_associado = None
+                menor_distancia = DISTANCIA_MAX_ASSOCIACAO
+                
+                # Procura o objeto rastreado mais próximo
+                for obj_id, dados in objetos_rastreados.items():
+                    centro_rastreado = (dados['bbox'][0] + dados['bbox'][2]//2, 
+                                    dados['bbox'][1] + dados['bbox'][3]//2)
+                    distancia = math.hypot(centro_atual[0] - centro_rastreado[0], 
+                                        centro_atual[1] - centro_rastreado[1])
+                    
+                    if distancia < menor_distancia:
+                        menor_distancia = distancia
+                        objeto_associado = obj_id
+                
+                # Se encontrou um objeto para associar
+                if objeto_associado is not None:
+                    # Atualiza os dados do objeto rastreado
+                    objetos_rastreados[objeto_associado]['bbox'] = bbox_atual
+                    objetos_rastreados[objeto_associado]['bbox_sem_padding'] = bbox_sem_padding
+                    objetos_rastreados[objeto_associado]['historia'].append(centro_atual)
+                    objetos_rastreados[objeto_associado]['detectado_este_frame'] = True
+                    objetos_rastreados[objeto_associado]['frames_sem_detecao'] = 0
+                else:
+                    # Cria um novo objeto rastreado
+                    objetos_rastreados[proximo_id] = {
+                        'bbox': bbox_atual,
+                        'bbox_sem_padding': bbox_sem_padding,
+                        'historia': [centro_atual],
+                        'frames_sem_detecao': 0,
+                        'detectado_este_frame': True,
+                        'total_detections': 0
+                    }
+
+                    objeto_associado = proximo_id
+                    proximo_id += 1
+
+                for obj_id in list(objetos_rastreados.keys()):
+                    if not objetos_rastreados[obj_id]['detectado_este_frame']:
+                        objetos_rastreados[obj_id]['frames_sem_detecao'] += 1
+                    else:
+                        objetos_rastreados[obj_id]['frames_sem_detecao'] = 0
+
+                    # Remove objetos que não foram detectados por muitos frames
+                    if objetos_rastreados[obj_id]['frames_sem_detecao'] > MAX_FRAMES_SEM_DETECCAO:
+                        del objetos_rastreados[obj_id]
+
+
+                # Processar detecções e salvar imagens para objetos detectados
+                data_hora_model = datetime.now().strftime('%Y%m%d_%H%M%S')
+                data_hora_model_text = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+                for obj_id, dados in objetos_rastreados.items():
+                    if dados['detectado_este_frame']:
+                        bbox = dados['bbox']
+                        bbox_sem_padding = dados['bbox_sem_padding']
+                        novo_x, novo_y, lado_pad, _ = bbox
+                        x_sem_padding, y_sem_padding, lado_sem_padding, _ = bbox_sem_padding
+                        
+                        # Recortar a região de interesse
+                        recorte = frame_original[novo_y:novo_y + lado_pad, novo_x:novo_x + lado_pad]
+                        if recorte.size == 0:  # Pula se o recorte estiver vazio
+                            continue
+                            
+                        imagem_expandida = cv2.resize(recorte, (640, 640), interpolation=cv2.INTER_LINEAR)
+
+                        # Roda o modelo
+                        total_detections = 0
+                        # start_time = time.time()
+                        # print(f'Modelo rodando as {data_hora_model_text} para objeto ID {obj_id}')
+                        # detections_sorted_left = run_model(torch_device, type_model, model, imagem_expandida)
+
+                        # # Aplica as regras de detecção
+                        # frame_detectado, total_detections = rules_detection(imagem_expandida.copy(), detections_sorted_left, 0, 1, perc_median, min_score, limit_center) # 0 e 1 porque nao estou fazendo com a imagem já cortada
+
+                        # end_time = time.time()  # Fim da medição de tempo
+                        # processing_time = end_time - start_time
+                        # print(f'(Tempo de Processamento: {processing_time:.4f}s)')
+
+                        # # Atualiza o total de detecções para este objeto
+                        # objetos_rastreados[obj_id]['total_detections'] = total_detections
+
+                        # if total_detections > 0 and save_dir:
+                        #     save_frame(imagem_expandida, frame_detectado, linha, obj_id, data_hora_model, total_detections, save_dir)
+
+                        # Marcar Imagem com o Retangulo sem padding
+                        cv2.rectangle(frame_marcado, 
+                                      (x_sem_padding, y_sem_padding), (x_sem_padding + lado_sem_padding,  y_sem_padding + lado_sem_padding), 
+                                      (255, 0, 0), 
+                                      2
+                        )
+
+                        # Desenha o retângulo e ID
+                        cv2.rectangle(frame_marcado, 
+                                    (novo_x, novo_y), (novo_x + lado_pad, novo_y + lado_pad), 
+                                    (255, 0, 0), 2)
+
+                        texto_id = f"ID {obj_id}"
+                        fonte = cv2.FONT_HERSHEY_SIMPLEX
+                        escala = 0.6
+                        espessura = 2
+
+                        (tamanho_texto, _) = cv2.getTextSize(texto_id, fonte, escala, espessura)
+                        largura_texto, altura_texto = tamanho_texto
+                        x_texto = novo_x
+                        y_texto = novo_y - 10
+
+                        # Fundo do texto de ID
+                        cv2.rectangle(frame_marcado,
+                                    (x_texto, y_texto - altura_texto),
+                                    (x_texto + largura_texto, y_texto + 5),
+                                    (255, 0, 0), thickness=-1)
+
+                        # Texto de ID
+                        cv2.putText(frame_marcado, texto_id,
+                                    (x_texto, y_texto),
+                                    fonte, escala, (255, 255, 255), espessura)
+
+                        # Exibir total de detecções no centro
+                        texto_total = str(total_detections)
+                        (w_texto, h_texto), _ = cv2.getTextSize(texto_total, fonte, 2.5, 4)
+                        centro_texto_x = novo_x + lado_pad // 2 - w_texto // 2
+                        centro_texto_y = novo_y + lado_pad // 2 + h_texto // 2
+
+                        cv2.putText(frame_marcado, texto_total,
+                                    (centro_texto_x, centro_texto_y),
+                                    fonte, 2.5, (0, 255, 255), 4)
+
+        # Exibe o quadro ao vivo
+        if visualize == 1:
+            cv2.imshow(f'Ao vivo: {device_name}', frame_marcado)
+
+        key = cv2.waitKey(wait_key) & 0xFF
+        if key:
+            # Pressione 'ESC' para sair
+            if key == 27:
+                break
+
+    device.release()
+    cv2.destroyAllWindows()
+
+
+def save_frame(frame_original, frame_detection, linha, id_image, data_hora_atual,
                total_detections, save_dir):
     os.makedirs(save_dir, exist_ok=True)
 
     caminho_SM = os.path.join(save_dir, 'SM')
     os.makedirs(caminho_SM, exist_ok=True)
-    frame_SM_path = os.path.join(caminho_SM, f'SM_{linha}_{data_hora_atual}.jpg')
-    csv_SM_path = os.path.join(caminho_SM, f'SM_{linha}_{data_hora_atual}.csv')
+    frame_SM_path = os.path.join(caminho_SM, f'SM_{linha}_{id_image}_{data_hora_atual}.jpg')
+    csv_SM_path = os.path.join(caminho_SM, f'SM_{linha}_{id_image}_{data_hora_atual}.csv')
     cv2.imwrite(frame_SM_path, frame_original)
 
     with open(csv_SM_path, mode='w', newline='') as csv_SM_file:
@@ -302,8 +604,8 @@ def save_frame(frame_original, frame_detection, linha, data_hora_atual,
 
     caminho_CM = os.path.join(save_dir, 'CM')
     os.makedirs(caminho_CM, exist_ok=True)
-    frame_CM_path = os.path.join(caminho_CM, f'CM_{linha}_{data_hora_atual}.jpg')
-    csv_CM_path = os.path.join(caminho_CM, f'CM_{linha}_{data_hora_atual}.csv')
+    frame_CM_path = os.path.join(caminho_CM, f'CM_{linha}_{id_image}_{data_hora_atual}.jpg')
+    csv_CM_path = os.path.join(caminho_CM, f'CM_{linha}_{id_image}_{data_hora_atual}.csv')
     cv2.imwrite(frame_CM_path, frame_detection)
 
     with open(csv_CM_path, mode='w', newline='') as csv_CM_file:
@@ -312,3 +614,4 @@ def save_frame(frame_original, frame_detection, linha, data_hora_atual,
         writer.writerow([data_hora_atual, linha, total_detections])
 
     print(f"Salvo em {frame_CM_path} e {frame_SM_path}")
+
