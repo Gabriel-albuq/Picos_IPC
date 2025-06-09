@@ -433,7 +433,7 @@ def device_start_capture_multiples(camera_backend, torch_device, device_name, de
             bbox_atual = (novo_x_pad, novo_y_pad, lado_pad, lado_pad)
             bbox_sem_padding = (centro_x - lado // 2, centro_y - lado // 2, lado, lado)
 
-            if novo_y_pad < 20 or fim_y_pad > altura - 20:
+            if novo_y_pad < 30 or fim_y_pad > altura - 30:
                 continue  # Ignora essa marcação
 
             # Adiciona à lista de detecções atuais
@@ -513,22 +513,22 @@ def device_start_capture_multiples(camera_backend, torch_device, device_name, de
 
                         # Roda o modelo
                         total_detections = 0
-                        # start_time = time.time()
-                        # print(f'Modelo rodando as {data_hora_model_text} para objeto ID {obj_id}')
-                        # detections_sorted_left = run_model(torch_device, type_model, model, imagem_expandida)
+                        start_time = time.time()
+                        print(f'Modelo rodando as {data_hora_model_text} para objeto ID {obj_id}')
+                        detections_sorted_left = run_model(torch_device, type_model, model, imagem_expandida)
 
-                        # # Aplica as regras de detecção
-                        # frame_detectado, total_detections = rules_detection(imagem_expandida.copy(), detections_sorted_left, 0, 1, perc_median, min_score, limit_center) # 0 e 1 porque nao estou fazendo com a imagem já cortada
+                        # Aplica as regras de detecção
+                        frame_detectado, total_detections = rules_detection(imagem_expandida.copy(), detections_sorted_left, 0, 1, perc_median, min_score, limit_center) # 0 e 1 porque nao estou fazendo com a imagem já cortada
 
-                        # end_time = time.time()  # Fim da medição de tempo
-                        # processing_time = end_time - start_time
-                        # print(f'(Tempo de Processamento: {processing_time:.4f}s)')
+                        end_time = time.time()  # Fim da medição de tempo
+                        processing_time = end_time - start_time
+                        print(f'(Tempo de Processamento: {processing_time:.4f}s)')
 
-                        # # Atualiza o total de detecções para este objeto
-                        # objetos_rastreados[obj_id]['total_detections'] = total_detections
+                        # Atualiza o total de detecções para este objeto
+                        objetos_rastreados[obj_id]['total_detections'] = total_detections
 
-                        # if total_detections > 0 and save_dir:
-                        #     save_frame(imagem_expandida, frame_detectado, linha, obj_id, data_hora_model, total_detections, save_dir)
+                        if total_detections > 0 and save_dir:
+                            save_frame(imagem_expandida, frame_detectado, linha, obj_id, data_hora_model, total_detections, save_dir)
 
                         # Marcar Imagem com o Retangulo sem padding
                         cv2.rectangle(frame_marcado, 

@@ -447,15 +447,16 @@ if __name__ == '__main__':
 
     linha = '14'
     device_name = '14'
-    device_path = r'C:/ProjetosPython/PICOS/data/inputs/test_videos/2025-06-04_09-50-53.mp4'
+    device_path = r'C:/ProjetosPython/PICOS/data/inputs/test_videos/v2_2025-06-04_09-53-38.mp4'
     camera_backend = 'OpenCV'
     option_visualize = 1
     perc_top = 0.5
     perc_bottom = 0.65
     perc_median = 0.3
-    min_score = 0.4
-    limit_center = 8
+    min_score = 0.3
+    limit_center = 13
     save_dir = 'data\\outputs\\capturas'
+    save_dir = None
     deslocamento_esquerda = 780
     deslocamento_direita = 280
     box_size = 540
@@ -475,8 +476,14 @@ if __name__ == '__main__':
         if camera_backend == "OpenCV":
             device = device_config(device_name, device, device_fps, device_width, device_height, device_exposure)
 
-        device_start_capture_multiples(camera_backend, torch_device, device_name, device, device_fps, type_model, model,
+        device_start_capture(camera_backend, torch_device, device_name, device, device_fps, type_model, model,
                               option_visualize, sec_run_model, perc_top, perc_bottom, perc_median, deslocamento_esquerda, deslocamento_direita,
                               box_size, box_distance, box_offset_x, wait_key, config_path, 
                               exposure_value, min_score, limit_center, save_dir, linha
         )
+
+        # device_start_capture_multiples(camera_backend, torch_device, device_name, device, device_fps, type_model, model,
+        #                       option_visualize, sec_run_model, perc_top, perc_bottom, perc_median, deslocamento_esquerda, deslocamento_direita,
+        #                       box_size, box_distance, box_offset_x, wait_key, config_path, 
+        #                       exposure_value, min_score, limit_center, save_dir, linha
+        # )
