@@ -275,11 +275,13 @@ def device_start_capture(camera_backend, torch_device, device_name, device, devi
                     detections_sorted_left = run_model(torch_device, type_model, model, frame_left)
                     frame_detect_left, total_detections_left = rules_detection(frame_left.copy(), detections_sorted_left, 0, 1, perc_median,
                                                                     min_score, limit_center) # 0 e 1 porque nao estou fazendo com a imagem já cortada
+                    print(f"Lado Esquerdo ({data_hora_trigger_text}): {total_detections_left}")
 
                     # Direita
                     detections_sorted_right = run_model(torch_device, type_model, model, frame_right)
                     frame_detect_right, total_detections_right = rules_detection(frame_right.copy(), detections_sorted_right, 0, 1, perc_median,
                                                                     min_score, limit_center) # 0 e 1 porque nao estou fazendo com a imagem já cortada
+                    print(f"Lado Direito ({data_hora_trigger_text}): {total_detections_right}")
 
                     total_detections = total_detections_left + total_detections_right
 
@@ -289,8 +291,8 @@ def device_start_capture(camera_backend, torch_device, device_name, device, devi
                             cv2.imshow(f'Aplicacao do Modelo no Lado Esquerdo: {device_name}', frame_detect_left)
                             cv2.imshow(f'Aplicacao do Modelo no Lado Direito: {device_name}', frame_detect_right)
                         if save_dir:
-                            save_frame(frame_left, frame_detect_left, linha, id_image, data_hora_trigger, total_detections_left, save_dir)
-                            save_frame(frame_right, frame_detect_right, linha, id_image, data_hora_trigger, total_detections_right, save_dir)
+                            save_frame(frame_left, frame_detect_left, linha, 'esquerdo', id_image, data_hora_trigger, total_detections_left, save_dir)
+                            save_frame(frame_right, frame_detect_right, linha, 'direito', id_image, data_hora_trigger, total_detections_right, save_dir)
 
                     end_time = time.time()  # Fim da medição de tempo
                     processing_time = end_time - start_time
@@ -587,7 +589,7 @@ def device_start_capture_multiples(camera_backend, torch_device, device_name, de
     cv2.destroyAllWindows()
 
 
-def save_frame(frame_original, frame_detection, linha, id_image, data_hora_atual,
+def save_frame(frame_original, frame_detection, linha, lado, id_image, data_hora_atual,
                total_detections, save_dir):
     os.makedirs(save_dir, exist_ok=True)
 
@@ -599,8 +601,8 @@ def save_frame(frame_original, frame_detection, linha, id_image, data_hora_atual
 
     with open(csv_SM_path, mode='w', newline='') as csv_SM_file:
         writer = csv.writer(csv_SM_file)
-        writer.writerow(['DataHora', 'Linha', 'TotalDeteccoes'])
-        writer.writerow([data_hora_atual, linha, total_detections])
+        writer.writerow(['DataHora', 'Linha', 'Lado', 'TotalDeteccoes'])
+        writer.writerow([data_hora_atual, linha, lado, total_detections])
 
     caminho_CM = os.path.join(save_dir, 'CM')
     os.makedirs(caminho_CM, exist_ok=True)
@@ -610,8 +612,8 @@ def save_frame(frame_original, frame_detection, linha, id_image, data_hora_atual
 
     with open(csv_CM_path, mode='w', newline='') as csv_CM_file:
         writer = csv.writer(csv_CM_file)
-        writer.writerow(['DataHora', 'Linha', 'TotalDeteccoes'])
-        writer.writerow([data_hora_atual, linha, total_detections])
+        writer.writerow(['DataHora', 'Linha', 'Lado', 'TotalDeteccoes'])
+        writer.writerow([data_hora_atual, linha, lado, total_detections])
 
     print(f"Salvo em {frame_CM_path} e {frame_SM_path}")
 

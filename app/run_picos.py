@@ -78,7 +78,7 @@ def load_settings(config_path):
 
 
 def save_settings(config_path, perc_top, 
-                 perc_bottom, min_score, limit_center, 
+                 perc_bottom, perc_median, min_score, limit_center, 
                  save_dir, deslocamento_esquerda, deslocamento_direita,
                  box_size, box_distance, box_offset_x):
     """Função para salvar as configurações atuais diretamente nas variáveis no arquivo .txt."""
@@ -287,7 +287,7 @@ def start_application_interface(config_path):
 
     # Caminho padrão abaixo do campo
     row+=1
-    tk.Label(root, text="Caminho Padrão: data\\outputs\\capturas", anchor='w', width=30).grid(row=row, column=1, padx=pad_x, pady=pad_y, sticky='w')
+    tk.Label(root, anchor='w', width=30).grid(row=row, column=1, padx=pad_x, pady=pad_y, sticky='w')
 
     # Opção para "Não salvar detecções" (agora com valor padrão marcado)
     save_detection_var = tk.BooleanVar(value=True)  # Agora inicia como True (marcado)
@@ -366,6 +366,7 @@ def start_application_interface(config_path):
     box_offset_x_entry.insert(0, box_offset_x) 
         
     # Botão de confirmação
+    row+=1
     tk.Button(root, text="Confirmar", command=submit, width=20).grid(row=row, column=0, columnspan=4, pady=10)
     
     # Chama a função para ajustar o estado do diretório de salvar
@@ -408,7 +409,6 @@ def start_application_interface(config_path):
         result['box_offset_x']
     )
 
-
 if __name__ == '__main__':
     # INPUTS
     type_model = 'FRCNN_RN50'
@@ -441,27 +441,27 @@ if __name__ == '__main__':
     ) = load_settings(config_path)
 
     # Iniciar a aplicação
-    # linha, device_name, device_path, camera_backend, option_visualize, perc_top, perc_bottom, \
-    #         min_score, limit_center, save_dir, deslocamento_esquerda, deslocamento_direita, \
-    #         box_size, box_distance, box_offset_x = start_application_interface(config_path)
+    linha, device_name, device_path, camera_backend, option_visualize, perc_top, perc_bottom, \
+            perc_median, min_score, limit_center, save_dir, deslocamento_esquerda, deslocamento_direita, \
+            box_size, box_distance, box_offset_x = start_application_interface(config_path)
 
-    linha = '14'
-    device_name = '14'
-    device_path = r'C:/ProjetosPython/PICOS/data/inputs/test_videos/v2_2025-06-04_09-53-38.mp4'
-    camera_backend = 'OpenCV'
-    option_visualize = 1
-    perc_top = 0.5
-    perc_bottom = 0.65
-    perc_median = 0.3
-    min_score = 0.3
-    limit_center = 13
-    save_dir = 'data\\outputs\\capturas'
-    save_dir = None
-    deslocamento_esquerda = 780
-    deslocamento_direita = 280
-    box_size = 540
-    box_distance = 820
-    box_offset_x = -120
+    # linha = '14'
+    # device_name = '14'
+    # device_path = r'C:/ProjetosPython/PICOS/data/inputs/test_videos/v2_2025-06-04_09-53-38.mp4'
+    # camera_backend = 'OpenCV'
+    # option_visualize = 1
+    # perc_top = 0.5
+    # perc_bottom = 0.65
+    # perc_median = 0.3
+    # min_score = 0.3
+    # limit_center = 13
+    # save_dir = 'data\\outputs\\capturas'
+    # save_dir = None
+    # deslocamento_esquerda = 780
+    # deslocamento_direita = 280
+    # box_size = 540
+    # box_distance = 820
+    # box_offset_x = -120
 
     # Caso seja uma câmera, converter em número
     try:

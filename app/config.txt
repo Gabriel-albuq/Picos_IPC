@@ -10,3 +10,4 @@ deslocamento_direita = 280
 box_size = 540
 box_distance = 820
 box_offset_x = -120
+save_dir = data\outputs\capturas
