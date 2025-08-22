@@ -12,6 +12,7 @@ from .picos_cropped import crop_boxes_from_frame
 from .picos_run_model import run_model
 from .picos_trigger import trigger_frame, trigger_test
 from .picos_interface import save_settings
+from .picos_redim import redim_frame
 from src.class_camera_gx import GxiCapture
 
 def device_start(device_name, camera_backend, device_path):
@@ -164,8 +165,8 @@ def device_start_capture(camera_backend, torch_device, device_name, device, devi
             cv2.putText(frame_config, f'Abertura superior: {int(perc_bottom*100)}%   (Q - W)',  (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
             cv2.putText(frame_config,  f'Abertura inferior: {int(perc_top*100)}%   (A - S)',  (10, 40),  cv2.FONT_HERSHEY_SIMPLEX, 0.4,  (255, 255, 255),  1,  cv2.LINE_AA)
             
-            cv2.putText(frame_config, f'Deslocamento Esquerda: {int(perc_bottom*100)}%   (Q - W)',  (310, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
-            cv2.putText(frame_config,  f'Deslocamento Direita: {int(perc_top*100)}%   (A - S)',  (310, 40),  cv2.FONT_HERSHEY_SIMPLEX, 0.4,  (255, 255, 255),  1,  cv2.LINE_AA)
+            cv2.putText(frame_config, f'Deslocamento Esquerda: {int(perc_bottom*100)}%   (R - T)',  (310, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
+            cv2.putText(frame_config,  f'Deslocamento Direita: {int(perc_top*100)}%   (F - G)',  (310, 40),  cv2.FONT_HERSHEY_SIMPLEX, 0.4,  (255, 255, 255),  1,  cv2.LINE_AA)
 
             cv2.putText(frame_config, f'Tamanho do Quadrado de Corte: {int(perc_bottom*100)}%   (Z - X)',  (610, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
             cv2.putText(frame_config,  f'Distancia Entre Quadrados de Corte: {int(perc_top*100)}%   (C - V)',  (610, 40),  cv2.FONT_HERSHEY_SIMPLEX, 0.4,  (255, 255, 255),  1,  cv2.LINE_AA)
@@ -173,7 +174,9 @@ def device_start_capture(camera_backend, torch_device, device_name, device, devi
 
             # Exibe o quadro ao vivo
             if visualize == 1:
-                cv2.imshow(f'Ao vivo: {device_name}', frame_config)
+                #cv2.imshow(f'Ao vivo: {device_name}', frame_config)
+                frame_redim = redim_frame(frame_config)
+                cv2.imshow(f'Ao vivo: {device_name}', frame_redim)
 
             # Botões para configurar
             key = cv2.waitKey(wait_key) & 0xFF
@@ -243,7 +246,8 @@ def device_start_capture(camera_backend, torch_device, device_name, device, devi
             # Exibe o quadro ao vivo
             if visualize == 1:
                 cv2.putText(frame_trigger, f'{str(start_process)} (O)', (5, frame_trigger.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-                cv2.imshow(f'Ao vivo: {device_name}', frame_trigger)
+                frame_redim = redim_frame(frame_trigger)
+                cv2.imshow(f'Ao vivo: {device_name}', frame_redim)
 
             # Para ativar o trigger, ele tem que ficar off pelo menos uma vez (para não contar o mesmo biscoito 2x)
             if (
@@ -577,7 +581,9 @@ def device_start_capture_multiples(camera_backend, torch_device, device_name, de
 
         # Exibe o quadro ao vivo
         if visualize == 1:
-            cv2.imshow(f'Ao vivo: {device_name}', frame_marcado)
+            #cv2.imshow(f'Ao vivo: {device_name}', frame_marcado)
+            frame_redim = redim_frame(frame_marcado)
+            cv2.imshow(f'Ao vivo: {device_name}', frame_redim)
 
         key = cv2.waitKey(wait_key) & 0xFF
         if key:
