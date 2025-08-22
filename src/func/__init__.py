@@ -5,5 +5,5 @@ from .picos_load_model import load_model
 from .picos_rules_detection import rules_detection
 from .picos_run_model import run_model
 from .picos_trigger import trigger_frame, trigger_test
-from .picos_interface import start_application_interface, load_settings
+from .picos_interface import start_application_interface, load_settings, save_settings
 from .picos_cropped import frame_cropped

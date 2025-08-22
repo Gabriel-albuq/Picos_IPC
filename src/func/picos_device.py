@@ -96,14 +96,14 @@ def detectar_slugs(frame):
 
     return contornos_filtrados
 
-def device_start_capture(camera_backend, torch_device, device_name, device, device_fps, type_model, 
+
+def device_start_capture(device_path, option_visualize, camera_backend, torch_device, device_name, device, device_fps, type_model, 
                          model, visualize, sec_run_model, perc_top, perc_bottom, perc_median, deslocamento_esquerda, deslocamento_direita, 
                          box_size, box_distance, box_offset_x,  wait_key,
-                         config_path, exposure_value, min_score, limit_center, save_dir, linha):
+                         config_path, exposure_value, min_score, limit_center, save_dir, linha, start_process = 'OFF'):
     
     frame_delay = int(device_fps * sec_run_model)  # Número de quadros para rodar o modelo
 
-    start_process = 'OFF'
     frame_count = 0
     time_run_model = 0
     count_trigger = 0
@@ -184,7 +184,10 @@ def device_start_capture(camera_backend, torch_device, device_name, device, devi
                 # Ligar o detector
                 if key == ord('o') or key == ord('O'):
                     start_process = 'ON'
-                    save_settings(config_path, exposure_value, perc_top, perc_bottom, min_score,limit_center, sec_run_model, wait_key, save_dir, deslocamento_esquerda, deslocamento_direita, box_size, box_distance, box_offset_x)
+
+                    save_settings(config_path, linha, device_name, device_path, camera_backend, option_visualize, 
+                                  perc_top, perc_bottom, perc_median, min_score,  limit_center, save_dir, 
+                                  deslocamento_esquerda, deslocamento_direita, box_size, box_distance, box_offset_x)
                     print('Captura ligada')
                     print('-----------------------------------')
 

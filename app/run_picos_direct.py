@@ -1,6 +1,21 @@
-﻿import tkinter as tk
+﻿import os
+import sys
+import torch
+import tkinter as tk
 from tkinter import filedialog
 import tkinter.messagebox as messagebox
+
+root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(root_path)
+print(root_path)
+
+from src.func import (
+    device_config,
+    device_start,
+    device_start_capture,
+    device_start_capture_multiples,
+    load_model
+)
 
 def load_settings(config_path):
     """Função para ler as configurações de um arquivo .txt e atribuir os valores diretamente às variáveis."""
@@ -74,40 +89,6 @@ def load_settings(config_path):
     )
 
 
-def save_settings(config_path, linha, device_name, device_path, camera_backend, option_visualize, perc_top, 
-                 perc_bottom, perc_median, min_score, limit_center, 
-                 save_dir, deslocamento_esquerda, deslocamento_direita,
-                 box_size, box_distance, box_offset_x):
-    """Função para salvar as configurações atuais diretamente nas variáveis no arquivo .txt."""
-    arquivo = config_path
-    try:
-        with open(arquivo, 'w') as file:
-            file.write(f'linha = {linha}\n')
-            file.write(f'device_name = {device_name}\n')
-            file.write(f'device_path = {device_path}\n')
-            file.write(f'camera_backend = {camera_backend}\n')
-            file.write(f'option_visualize = {option_visualize}\n')
-            file.write(f'perc_top = {perc_top}\n')
-            file.write(f'perc_bottom = {perc_bottom}\n')
-            file.write(f'perc_median = {perc_median}\n')
-            file.write(f'min_score = {min_score}\n')
-            file.write(f'limit_center = {limit_center}\n')
-            if save_dir is not None:
-                file.write(f'save_dir = {save_dir}\n')
-            else:
-                file.write(f'save_dir = None\n')
-            file.write(f'save_dir = {save_dir}\n')
-            file.write(f'deslocamento_esquerda = {deslocamento_esquerda}\n')
-            file.write(f'deslocamento_direita = {deslocamento_direita}\n')
-            file.write(f'box_size = {box_size}\n')
-            file.write(f'box_distance = {box_distance}\n')
-            file.write(f'box_offset_x = {box_offset_x}\n')
-            
-        print('\nConfigurações salvas com sucesso.\n')
-    except Exception as e:
-        print(f'\nErro ao salvar as configurações: {e}\n')
-
-
 def start_application_interface(config_path):
     # Dicionário para armazenar os resultados que serão retornados
     result = {
@@ -130,11 +111,6 @@ def start_application_interface(config_path):
     }
 
     (
-        linha,
-        device_name,
-        device_path,
-        camera_backend,
-        option_visualize,
         perc_top,
         perc_bottom,
         perc_median,
@@ -383,23 +359,18 @@ def start_application_interface(config_path):
     root.mainloop()
     
     # Salva as configurações
-    save_settings(config_path,       
-                    result['linha'],
-                    result['device_name'],
-                    result['device_path'],
-                    result['camera_backend'],
-                    result['option_visualize'],
-                    result['perc_top'],
-                    result['perc_bottom'],
-                    result['perc_median'],
-                    result['min_score'],
-                    result['limit_center'],
-                    result['save_dir'],
-                    result['deslocamento_esquerda'],
-                    result['deslocamento_direita'],
-                    result['box_size'],
-                    result['box_distance'],
-                    result['box_offset_x'],
+    save_settings(config_path, 
+                result['perc_top'], 
+                result['perc_bottom'],
+                result['perc_median'],
+                result['min_score'], 
+                result['limit_center'], 
+                result['save_dir'],
+                result['deslocamento_esquerda'],
+                result['deslocamento_direita'],
+                result['box_size'],
+                result['box_distance'],
+                result['box_offset_x']
     ) 
     
     # Retorna os valores coletados
@@ -422,23 +393,67 @@ def start_application_interface(config_path):
         result['box_offset_x']
     )
 
-
 if __name__ == '__main__':
-    # Exemplo de chamada da função
+    # INPUTS
+    type_model = 'FRCNN_RN50'
+    model = load_model(type_model)
     config_path = r'app\config.txt'
-    (linha, device_name, device_path, camera_backend, option_visualize, exposure_value, 
-     perc_top, perc_bottom, min_score, limit_center, save_dir, 
-     sec_run_model, wait_key, square_size, grid_x, grid_y) = start_application_interface(config_path)
-    # print("Linha:", linha)
-    # print("Nome da Câmera/Vídeo:", device_name)
-    # print("Caminho do dispositivo:", device_path)
-    # print("Visualizar predições:", option_visualize)
-    # print("Exposição:", exposure_value)
-    # print("Percentual Mínimo:", perc_top)
-    # print("Percentual Máximo:", perc_bottom)
-    # print("Score Mínimo:", min_score)
-    # print("Limite de centro:", limit_center)
-    # print("Tamanho da área:", square_size)
-    # print("Localização X:", grid_x)
-    # print("Localização Y:", grid_y)
-    # print("Diretório de salvar:", save_dir if save_dir else "Não salvar detecções")
+    exposure_value = 0.0
+    sec_run_model = 0.4
+    wait_key = 16
+
+    # Verificar se a GPU está disponível e configurar o dispositivo
+    torch_device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f'\nDispositivo de processamento utilizado: {torch_device}')
+
+    current_directory = os.path.dirname(os.path.abspath(__file__))   # Diretório atual
+    parent_directory = os.path.dirname(current_directory)   # Diretório pai (pasta acima)
+    
+    (
+        linha,
+        device_name,
+        device_path,
+        camera_backend,
+        option_visualize,
+        perc_top,
+        perc_bottom,
+        perc_median,
+        min_score,
+        limit_center,
+        save_dir,
+        deslocamento_esquerda,
+        deslocamento_direita,
+        box_size,
+        box_distance,
+        box_offset_x,
+    ) = load_settings(config_path)
+
+    # Iniciar a aplicação
+    # linha, device_name, device_path, camera_backend, option_visualize, perc_top, perc_bottom, \
+    #         perc_median, min_score, limit_center, save_dir, deslocamento_esquerda, deslocamento_direita, \
+    #         box_size, box_distance, box_offset_x = start_application_interface(config_path)
+
+    # Caso seja uma câmera, converter em número
+    try:
+        device_path = int(device_path)  # Tenta converter para inteiro
+    except ValueError:
+        pass
+
+    # Inicia o Device
+    (device,device_fps,device_width,device_height,device_exposure) = device_start(device_name, camera_backend, device_path)
+
+    if device:
+        if camera_backend == "OpenCV":
+            device = device_config(device_name, device, device_fps, device_width, device_height, device_exposure)
+
+        device_start_capture(device_path, option_visualize, camera_backend, torch_device, device_name, device, device_fps, type_model, model,
+                              option_visualize, sec_run_model, perc_top, perc_bottom, perc_median, deslocamento_esquerda, deslocamento_direita,
+                              box_size, box_distance, box_offset_x, wait_key, config_path, 
+                              exposure_value, min_score, limit_center, save_dir, linha, start_process="ON"
+        )
+
+        # device_start_capture_multiples(camera_backend, torch_device, device_name, device, device_fps, type_model, model,
+        #                       option_visualize, sec_run_model, perc_top, perc_bottom, perc_median, deslocamento_esquerda, deslocamento_direita,
+        #                       box_size, box_distance, box_offset_x, wait_key, config_path, 
+        #                       exposure_value, min_score, limit_center, save_dir, linha
+        # )
