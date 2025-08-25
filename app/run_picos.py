@@ -48,6 +48,8 @@ if __name__ == '__main__':
         min_score,
         limit_center,
         save_dir,
+        salvar_maiores,
+        salvar_menores,
         deslocamento_esquerda,
         deslocamento_direita,
         box_size,
@@ -57,7 +59,7 @@ if __name__ == '__main__':
 
     # Iniciar a aplicação
     linha, device_name, device_path, camera_backend, option_visualize, perc_top, perc_bottom, \
-            perc_median, min_score, limit_center, save_dir, deslocamento_esquerda, deslocamento_direita, \
+            perc_median, min_score, limit_center, save_dir, salvar_maiores, salvar_menores, deslocamento_esquerda, deslocamento_direita, \
             box_size, box_distance, box_offset_x = start_application_interface(config_path)
 
     # Caso seja uma câmera, converter em número
@@ -76,7 +78,7 @@ if __name__ == '__main__':
         device_start_capture(device_path, option_visualize, camera_backend, torch_device, device_name, device, device_fps, type_model, model,
                               option_visualize, sec_run_model, perc_top, perc_bottom, perc_median, deslocamento_esquerda, deslocamento_direita,
                               box_size, box_distance, box_offset_x, wait_key, config_path, 
-                              exposure_value, min_score, limit_center, save_dir, linha
+                              exposure_value, min_score, limit_center, save_dir, salvar_maiores, salvar_menores, linha
         )
 
         # device_start_capture_multiples(camera_backend, torch_device, device_name, device, device_fps, type_model, model,

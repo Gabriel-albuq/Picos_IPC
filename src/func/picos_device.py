@@ -100,7 +100,7 @@ def detectar_slugs(frame):
 def device_start_capture(device_path, option_visualize, camera_backend, torch_device, device_name, device, device_fps, type_model, 
                          model, visualize, sec_run_model, perc_top, perc_bottom, perc_median, deslocamento_esquerda, deslocamento_direita, 
                          box_size, box_distance, box_offset_x,  wait_key,
-                         config_path, exposure_value, min_score, limit_center, save_dir, linha, start_process = 'OFF'):
+                         config_path, exposure_value, min_score, limit_center, save_dir, salvar_maiores, salvar_menores, linha, start_process = 'OFF'):
     
     frame_delay = int(device_fps * sec_run_model)  # Número de quadros para rodar o modelo
 
@@ -186,7 +186,7 @@ def device_start_capture(device_path, option_visualize, camera_backend, torch_de
                     start_process = 'ON'
 
                     save_settings(config_path, linha, device_name, device_path, camera_backend, option_visualize, 
-                                  perc_top, perc_bottom, perc_median, min_score,  limit_center, save_dir, 
+                                  perc_top, perc_bottom, perc_median, min_score,  limit_center, save_dir, salvar_maiores, salvar_menores, 
                                   deslocamento_esquerda, deslocamento_direita, box_size, box_distance, box_offset_x)
                     print('Captura ligada')
                     print('-----------------------------------')
@@ -298,14 +298,15 @@ def device_start_capture(device_path, option_visualize, camera_backend, torch_de
                             cv2.imshow(f'Aplicacao do Modelo no Lado Esquerdo: {device_name}', frame_detect_left)
                             cv2.imshow(f'Aplicacao do Modelo no Lado Direito: {device_name}', frame_detect_right)
                         if save_dir:
-                            save_frame(frame_left, frame_detect_left, linha, 'esquerdo', id_image, data_hora_trigger, total_detections_left, save_dir)
-                            save_frame(frame_right, frame_detect_right, linha, 'direito', id_image, data_hora_trigger, total_detections_right, save_dir)
+                            if total_detections_left < salvar_menores or total_detections_left > salvar_maiores:
+                                save_frame(frame_left, frame_detect_left, linha, 'esquerdo', id_image, data_hora_trigger, total_detections_left, save_dir)
+
+                            if total_detections_right < salvar_menores or total_detections_right > salvar_maiores:
+                                save_frame(frame_right, frame_detect_right, linha, 'direito', id_image, data_hora_trigger, total_detections_right, save_dir)
 
                     end_time = time.time()  # Fim da medição de tempo
                     processing_time = end_time - start_time
-                    # print(
-                    #     f'(Tempo de Processamento: {processing_time:.4f}s) - Detecções: {len(detections_sorted)}'
-                    # )
+                    print(f'(Tempo de Processamento: {processing_time:.4f}s)')
 
             # Botões para configurar
             key = cv2.waitKey(wait_key) & 0xFF

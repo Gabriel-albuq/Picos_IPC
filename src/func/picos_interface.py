@@ -17,6 +17,8 @@ def load_settings(config_path):
         'min_score': 0.5,
         'limit_center': 8,
         'save_dir': 'data\\outputs\\capturas',
+        'salvar_maiores': 0,
+        'salvar_menores': 1000,
         'deslocamento_esquerda': 780,
         'deslocamento_direita': 280,
         'box_size': 540,
@@ -66,6 +68,8 @@ def load_settings(config_path):
         defaults['min_score'],
         defaults['limit_center'],
         defaults['save_dir'],
+        defaults['salvar_maiores'],
+        defaults['salvar_menores'],
         defaults['deslocamento_esquerda'],
         defaults['deslocamento_direita'],
         defaults['box_size'],
@@ -76,7 +80,7 @@ def load_settings(config_path):
 
 def save_settings(config_path, linha, device_name, device_path, camera_backend, option_visualize, perc_top, 
                  perc_bottom, perc_median, min_score, limit_center, 
-                 save_dir, deslocamento_esquerda, deslocamento_direita,
+                 save_dir, salvar_maiores, salvar_menores, deslocamento_esquerda, deslocamento_direita,
                  box_size, box_distance, box_offset_x):
     """Função para salvar as configurações atuais diretamente nas variáveis no arquivo .txt."""
     arquivo = config_path
@@ -96,7 +100,8 @@ def save_settings(config_path, linha, device_name, device_path, camera_backend, 
                 file.write(f'save_dir = {save_dir}\n')
             else:
                 file.write(f'save_dir = None\n')
-            file.write(f'save_dir = {save_dir}\n')
+            file.write(f'salvar_maiores = {salvar_maiores}\n')
+            file.write(f'salvar_menores = {salvar_menores}\n')
             file.write(f'deslocamento_esquerda = {deslocamento_esquerda}\n')
             file.write(f'deslocamento_direita = {deslocamento_direita}\n')
             file.write(f'box_size = {box_size}\n')
@@ -121,6 +126,8 @@ def start_application_interface(config_path):
         'min_score': None,
         'limit_center': None,
         'save_dir': None,
+        'salvar_maiores': None,
+        'salvar_menores': None,
         'camera_backend': None, 
         'deslocamento_esquerda': None,
         'deslocamento_direita': None,
@@ -141,6 +148,8 @@ def start_application_interface(config_path):
         min_score,
         limit_center,
         save_dir,
+        salvar_maiores,
+        salvar_menores,
         deslocamento_esquerda,
         deslocamento_direita,
         box_size,
@@ -215,6 +224,9 @@ def start_application_interface(config_path):
         else:
             result['save_dir'] = None
             
+        result['salvar_maiores'] = salvar_maiores
+        result['salvar_menores'] = salvar_menores
+        
         root.destroy()  # Fecha a janela após obter os valores
     
     def browse_file():
@@ -395,6 +407,8 @@ def start_application_interface(config_path):
                     result['min_score'],
                     result['limit_center'],
                     result['save_dir'],
+                    result['salvar_maiores'],
+                    result['salvar_menores'],
                     result['deslocamento_esquerda'],
                     result['deslocamento_direita'],
                     result['box_size'],
@@ -415,6 +429,8 @@ def start_application_interface(config_path):
         result['min_score'],
         result['limit_center'],
         result['save_dir'],
+        result['salvar_maiores'],
+        result['salvar_menores'],
         result['deslocamento_esquerda'],
         result['deslocamento_direita'],
         result['box_size'],
