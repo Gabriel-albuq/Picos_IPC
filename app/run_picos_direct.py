@@ -53,6 +53,7 @@ if __name__ == '__main__':
         box_size,
         box_distance,
         box_offset_x,
+        clp_ip
     ) = load_settings(config_path)
 
     # Iniciar a aplicação
@@ -76,11 +77,11 @@ if __name__ == '__main__':
         device_start_capture(device_path, option_visualize, camera_backend, torch_device, device_name, device, device_fps, type_model, model,
                               option_visualize, sec_run_model, perc_top, perc_bottom, perc_median, deslocamento_esquerda, deslocamento_direita,
                               box_size, box_distance, box_offset_x, wait_key, config_path, 
-                              exposure_value, min_score, limit_center, save_dir, salvar_maiores, salvar_menores, linha, start_process="ON"
+                              exposure_value, min_score, limit_center, save_dir, salvar_maiores, salvar_menores, linha, start_process="ON", clp_ip=clp_ip
         )
 
         # device_start_capture_multiples(camera_backend, torch_device, device_name, device, device_fps, type_model, model,
         #                       option_visualize, sec_run_model, perc_top, perc_bottom, perc_median, deslocamento_esquerda, deslocamento_direita,
         #                       box_size, box_distance, box_offset_x, wait_key, config_path, 
-        #                       exposure_value, min_score, limit_center, save_dir, linha
+        #                       exposure_value, min_score, limit_center, save_dir, linha, start_process="ON", clp_ip=clp_ip
         # )

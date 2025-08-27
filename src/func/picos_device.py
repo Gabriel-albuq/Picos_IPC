@@ -15,6 +15,75 @@ from .picos_interface import save_settings
 from .picos_redim import redim_frame
 from src.class_camera_gx import GxiCapture
 
+from pylogix import PLC
+
+CLP_TAG_RIGHT_COUNT = 'count_right' # SUBSTITUA PELO NOME REAL DA TAG NO SEU CLP (ex: 'MainProgram.CookieCountRight')
+CLP_TAG_LEFT_COUNT = 'count_left'   # SUBSTITUA PELO NOME REAL DA TAG NO SEU CLP (ex: 'MainProgram.CookieCountLeft')
+
+
+# --- Funções Ethernet/IP (baseadas no seu exemplo write_pylogix.py) ---
+def _write_pylogix_internal(clp_ip, right_count, left_count):
+    """
+    Função interna para escrita Ethernet/IP usando pylogix.
+    Envia as contagens para as tags especificadas no CLP.
+    """
+    feedback = "Sucesso"
+    try:
+        with PLC() as comm:
+            comm.IPAddress = clp_ip
+            # Define as variáveis a serem escritas como uma lista de tuplas
+            tags_to_write = [
+                (CLP_TAG_RIGHT_COUNT, right_count),
+                (CLP_TAG_LEFT_COUNT, left_count)
+            ]
+
+            print(f"✍️ Escrevendo variáveis no CLP ({clp_ip}):")
+            results = comm.Write(tags_to_write)
+
+            if isinstance(results, list):
+                for res in results:
+                    if res.Status == 'Success':
+                        print(f"  {res.TagName} atualizado para {res.Value}")
+                    else:
+                        print(f"  Erro ao escrever em {res.TagName}: {res.Status}")
+                        feedback = f"Erro em {res.TagName}: {res.Status}"
+            # O caso 'else' de apenas uma tag não é necessário aqui
+    except Exception as e:
+        feedback = f"Exceção na comunicação CLP ({clp_ip}): {e}"
+    
+    return feedback
+
+# Funções Modbus (mantidas para referência, mas não utilizadas pela lógica principal se o IP for passado)
+# (Mantive os comentários e o código originais para não perder nada)
+"""
+def _read_modbus_internal(IP):
+    # Função interna para leitura Modbus. Não exposta diretamente.
+    comm_config = ModbusClient(host=IP, port=502, unit_id=1, timeout=500.0, auto_open=True, auto_close=True)
+    regs_read = comm_config.read_input_registers(0, 10)
+
+    if regs_read:
+        i = 0
+        while i < 6:
+            regs_read[i] = regs_read[i] / 100
+            i += 1
+    else:
+        regs_read = "Erro na leitura"
+    return regs_read
+    
+def _write_modbus_internal(IP, vars_escrita):
+    # Função interna para escrita Modbus. Não exposta diretamente.
+    comm_config = ModbusClient(host=IP, port=502, unit_id=1, timeout=500.0, auto_open=True, auto_close=True)
+    reg_write = comm_config.write_multiple_registers(0, vars_escrita)
+
+    if reg_write:
+        reg_write = "Escrita finalizada com sucesso"
+    else:
+        reg_write = "Erro na escrita"
+    return reg_write
+"""
+# --- Fim das Funções Modbus ---
+
+
 def device_start(device_name, camera_backend, device_path):
     
     print(f"Verificando device '{device_name}'")
@@ -100,7 +169,7 @@ def detectar_slugs(frame):
 def device_start_capture(device_path, option_visualize, camera_backend, torch_device, device_name, device, device_fps, type_model, 
                          model, visualize, sec_run_model, perc_top, perc_bottom, perc_median, deslocamento_esquerda, deslocamento_direita, 
                          box_size, box_distance, box_offset_x,  wait_key,
-                         config_path, exposure_value, min_score, limit_center, save_dir, salvar_maiores, salvar_menores, linha, start_process = 'OFF'):
+                         config_path, exposure_value, min_score, limit_center, save_dir, salvar_maiores, salvar_menores, linha, start_process = 'OFF', clp_ip=None):
     
     frame_delay = int(device_fps * sec_run_model)  # Número de quadros para rodar o modelo
 
@@ -187,7 +256,7 @@ def device_start_capture(device_path, option_visualize, camera_backend, torch_de
 
                     save_settings(config_path, linha, device_name, device_path, camera_backend, option_visualize, 
                                   perc_top, perc_bottom, perc_median, min_score,  limit_center, save_dir, salvar_maiores, salvar_menores, 
-                                  deslocamento_esquerda, deslocamento_direita, box_size, box_distance, box_offset_x)
+                                  deslocamento_esquerda, deslocamento_direita, box_size, box_distance, box_offset_x, clp_ip)
                     print('Captura ligada')
                     print('-----------------------------------')
 
@@ -292,21 +361,42 @@ def device_start_capture(device_path, option_visualize, camera_backend, torch_de
 
                     total_detections = total_detections_left + total_detections_right
 
+                    end_time = time.time()  # Fim da medição de tempo
+                    processing_time = end_time - start_time
+                    print(f'(Tempo de Processamento: {processing_time:.4f}s)')
+
+                    # ----------- BLOCO PARA ESCRITA ETHERNET/IP CONDICIONAL E SEGURA -----------
+                    start_time = time.time()   # Início da medição de tempo
+                    if clp_ip is not None: # Só tenta escrever se um IP for fornecido
+                        try:
+                            # Chama a função _write_pylogix_internal com as contagens
+                            feedback_clp = _write_pylogix_internal(clp_ip, total_detections_right, total_detections_left)
+                            print(f"Ethernet/IP write feedback: {feedback_clp}")
+                        except Exception as e:
+                            print(f"ATENÇÃO: Erro ao escrever no CLP ({clp_ip}) via Ethernet/IP: {e}. O programa continua.")
+                    else:
+                        pass # print("CLP IP não configurado, pulando escrita no CLP via Ethernet/IP.") # Opcional: para depuração
+                    end_time = time.time()  # Fim da medição de tempo
+                    processing_time = end_time - start_time
+                    print(f'(Tempo para escrever no CLP: {processing_time:.4f}s)')
+                    # ----------------------------------------------------------------------------
+
                     id_image = ''
                     if total_detections > 0:
                         if visualize == 1:
                             cv2.imshow(f'Aplicacao do Modelo no Lado Esquerdo: {device_name}', frame_detect_left)
                             cv2.imshow(f'Aplicacao do Modelo no Lado Direito: {device_name}', frame_detect_right)
                         if save_dir:
+                            start_time = time.time()   # Início da medição de tempo
                             if total_detections_left < salvar_menores or total_detections_left > salvar_maiores:
                                 save_frame(frame_left, frame_detect_left, linha, 'esquerdo', id_image, data_hora_trigger, total_detections_left, save_dir)
 
                             if total_detections_right < salvar_menores or total_detections_right > salvar_maiores:
                                 save_frame(frame_right, frame_detect_right, linha, 'direito', id_image, data_hora_trigger, total_detections_right, save_dir)
-
-                    end_time = time.time()  # Fim da medição de tempo
-                    processing_time = end_time - start_time
-                    print(f'(Tempo de Processamento: {processing_time:.4f}s)')
+                            
+                            end_time = time.time()  # Fim da medição de tempo
+                            processing_time = end_time - start_time
+                            print(f'(Tempo para salvar a imagem: {processing_time:.4f}s)')
 
             # Botões para configurar
             key = cv2.waitKey(wait_key) & 0xFF
@@ -333,7 +423,7 @@ def device_start_capture(device_path, option_visualize, camera_backend, torch_de
 def device_start_capture_multiples(camera_backend, torch_device, device_name, device, device_fps, type_model, 
                          model, visualize, sec_run_model, perc_top, perc_bottom, perc_median, deslocamento_esquerda, deslocamento_direita, 
                          box_size, box_distance, box_offset_x,  wait_key,
-                         config_path, exposure_value, min_score, limit_center, save_dir, linha):
+                         config_path, exposure_value, min_score, limit_center, save_dir, linha, clp_ip=None):
     
     frame_delay = int(device_fps * sec_run_model)  # Número de quadros para rodar o modelo
 
@@ -582,6 +672,17 @@ def device_start_capture_multiples(camera_backend, torch_device, device_name, de
                         cv2.putText(frame_marcado, texto_total,
                                     (centro_texto_x, centro_texto_y),
                                     fonte, 2.5, (0, 255, 255), 4)
+        # ----------- BLOCO PARA ESCRITA ETHERNET/IP CONDICIONAL E SEGURA -----------
+        if clp_ip is not None: # Só tenta escrever se um IP for fornecido
+            try:
+                # Chama a função _write_pylogix_internal com as contagens
+                feedback_clp = _write_pylogix_internal(clp_ip, total_detections_right, total_detections_left)
+                print(f"Ethernet/IP write feedback: {feedback_clp}")
+            except Exception as e:
+                print(f"ATENÇÃO: Erro ao escrever no CLP ({clp_ip}) via Ethernet/IP: {e}. O programa continua.")
+        else:
+            pass # print("CLP IP não configurado, pulando escrita no CLP via Ethernet/IP.") # Opcional: para depuração
+        # ----------------------------------------------------------------------------
 
         # Exibe o quadro ao vivo
         if visualize == 1:

@@ -23,7 +23,8 @@ def load_settings(config_path):
         'deslocamento_direita': 280,
         'box_size': 540,
         'box_distance': 820,
-        'box_offset_x': -120
+        'box_offset_x': -120,
+        'clp_ip': 'None'
     }
 
     try:
@@ -75,13 +76,14 @@ def load_settings(config_path):
         defaults['box_size'],
         defaults['box_distance'],
         defaults['box_offset_x'],
+        defaults['clp_ip']
     )
 
 
 def save_settings(config_path, linha, device_name, device_path, camera_backend, option_visualize, perc_top, 
                  perc_bottom, perc_median, min_score, limit_center, 
                  save_dir, salvar_maiores, salvar_menores, deslocamento_esquerda, deslocamento_direita,
-                 box_size, box_distance, box_offset_x):
+                 box_size, box_distance, box_offset_x, clp_ip):
     """Função para salvar as configurações atuais diretamente nas variáveis no arquivo .txt."""
     arquivo = config_path
     try:
@@ -107,6 +109,7 @@ def save_settings(config_path, linha, device_name, device_path, camera_backend, 
             file.write(f'box_size = {box_size}\n')
             file.write(f'box_distance = {box_distance}\n')
             file.write(f'box_offset_x = {box_offset_x}\n')
+            file.write(f'clp_ip = {clp_ip}\n')
             
         print('\nConfigurações salvas com sucesso.\n')
     except Exception as e:
@@ -134,6 +137,7 @@ def start_application_interface(config_path):
         'box_size': None,
         'box_distance': None,
         'box_offset_x': None,
+        'clp_ip': None
     }
 
     (
@@ -155,7 +159,28 @@ def start_application_interface(config_path):
         box_size,
         box_distance,
         box_offset_x,
+        clp_ip,
     ) = load_settings(config_path)
+
+    result['linha'] = linha
+    result['device_name'] = device_name
+    result['device_path'] = device_path
+    result['camera_backend'] = camera_backend
+    result['option_visualize'] = int(option_visualize)
+    result['perc_top'] = float(perc_top)
+    result['perc_bottom'] = float(perc_bottom)
+    result['perc_median'] = float(perc_median)
+    result['min_score'] = float(min_score)
+    result['limit_center'] = int(limit_center)
+    result['save_dir'] = save_dir
+    result['salvar_maiores'] = salvar_maiores
+    result['salvar_menores'] = salvar_menores
+    result['deslocamento_esquerda'] = int(deslocamento_esquerda)
+    result['deslocamento_direita'] = int(deslocamento_direita)
+    result['box_size'] = int(box_size)
+    result['box_distance'] = int(box_distance)
+    result['box_offset_x'] = int(box_offset_x)
+    result['clp_ip'] = clp_ip
     
     def submit():
         # Validação dos campos obrigatórios
@@ -226,6 +251,7 @@ def start_application_interface(config_path):
             
         result['salvar_maiores'] = salvar_maiores
         result['salvar_menores'] = salvar_menores
+        result['clp_ip'] = clp_ip
         
         root.destroy()  # Fecha a janela após obter os valores
     
@@ -414,7 +440,9 @@ def start_application_interface(config_path):
                     result['box_size'],
                     result['box_distance'],
                     result['box_offset_x'],
+                    result['clp_ip']
     ) 
+    print('Salvou')
     
     # Retorna os valores coletados
     return (
@@ -435,7 +463,8 @@ def start_application_interface(config_path):
         result['deslocamento_direita'],
         result['box_size'],
         result['box_distance'],
-        result['box_offset_x']
+        result['box_offset_x'],
+        result['clp_ip']
     )
 
 
