@@ -196,7 +196,7 @@ def device_start_capture(device_path, option_visualize, camera_backend, torch_de
             if camera_backend == "OpenCV":
                 return_camera, frame_original = device.read()
             if camera_backend == "GxCam":
-                return_camera, frame_original = device.read()  
+                return_camera, frame_original = device.read() 
 
             if restart_return_camera == True:
                 restart_return_camera = False
@@ -322,9 +322,7 @@ def device_start_capture(device_path, option_visualize, camera_backend, torch_de
                 cv2.imshow(f'Ao vivo: {device_name}', frame_redim)
 
             # Para ativar o trigger, ele tem que ficar off pelo menos uma vez (para não contar o mesmo biscoito 2x)
-            if (
-                result_trigger == False
-            ):   # O trigger tem que ficar off pelo menos uma vez para poder ser ativado novamente
+            if (result_trigger == False):   # O trigger tem que ficar off pelo menos uma vez para poder ser ativado novamente
                 wait_trigger_off = True
 
             # Quando a contagem de frame entra no intervalo de número de frames para rodar no modelo, e ele vem de uma não contagem, ativa para rodar o modelo
@@ -348,12 +346,16 @@ def device_start_capture(device_path, option_visualize, camera_backend, torch_de
                     print(f'Trigger ativado as {data_hora_trigger_text}, rodando o modelo')
 
                     # Esquerda
+                    sucesso, frame_left = cv2.imencode('.jpg', frame_left)
+                    frame_left = cv2.imdecode(frame_left, cv2.IMREAD_COLOR)
                     detections_sorted_left = run_model(torch_device, type_model, model, frame_left)
                     frame_detect_left, total_detections_left = rules_detection(frame_left.copy(), detections_sorted_left, 0, 1, perc_median,
                                                                     min_score, limit_center) # 0 e 1 porque nao estou fazendo com a imagem já cortada
                     print(f"Lado Esquerdo ({data_hora_trigger_text}): {total_detections_left}")
 
                     # Direita
+                    sucesso, frame_right = cv2.imencode('.jpg', frame_right)
+                    frame_right = cv2.imdecode(frame_right, cv2.IMREAD_COLOR)
                     detections_sorted_right = run_model(torch_device, type_model, model, frame_right)
                     frame_detect_right, total_detections_right = rules_detection(frame_right.copy(), detections_sorted_right, 0, 1, perc_median,
                                                                     min_score, limit_center) # 0 e 1 porque nao estou fazendo com a imagem já cortada
@@ -366,19 +368,20 @@ def device_start_capture(device_path, option_visualize, camera_backend, torch_de
                     print(f'(Tempo de Processamento: {processing_time:.4f}s)')
 
                     # ----------- BLOCO PARA ESCRITA ETHERNET/IP CONDICIONAL E SEGURA -----------
-                    start_time = time.time()   # Início da medição de tempo
-                    if clp_ip is not None: # Só tenta escrever se um IP for fornecido
-                        try:
-                            # Chama a função _write_pylogix_internal com as contagens
-                            feedback_clp = _write_pylogix_internal(clp_ip, total_detections_right, total_detections_left)
-                            print(f"Ethernet/IP write feedback: {feedback_clp}")
-                        except Exception as e:
-                            print(f"ATENÇÃO: Erro ao escrever no CLP ({clp_ip}) via Ethernet/IP: {e}. O programa continua.")
-                    else:
-                        pass # print("CLP IP não configurado, pulando escrita no CLP via Ethernet/IP.") # Opcional: para depuração
-                    end_time = time.time()  # Fim da medição de tempo
-                    processing_time = end_time - start_time
-                    print(f'(Tempo para escrever no CLP: {processing_time:.4f}s)')
+                    # print(clp_ip)
+                    # start_time = time.time()   # Início da medição de tempo
+                    # if clp_ip is not None: # Só tenta escrever se um IP for fornecido
+                    #     try:
+                    #         # Chama a função _write_pylogix_internal com as contagens
+                    #         feedback_clp = _write_pylogix_internal(clp_ip, total_detections_right, total_detections_left)
+                    #         print(f"Ethernet/IP write feedback: {feedback_clp}")
+                    #     except Exception as e:
+                    #         print(f"ATENÇÃO: Erro ao escrever no CLP ({clp_ip}) via Ethernet/IP: {e}. O programa continua.")
+                    # else:
+                    #     pass # print("CLP IP não configurado, pulando escrita no CLP via Ethernet/IP.") # Opcional: para depuração
+                    # end_time = time.time()  # Fim da medição de tempo
+                    # processing_time = end_time - start_time
+                    # print(f'(Tempo para escrever no CLP: {processing_time:.4f}s)')
                     # ----------------------------------------------------------------------------
 
                     id_image = ''
@@ -388,6 +391,9 @@ def device_start_capture(device_path, option_visualize, camera_backend, torch_de
                             cv2.imshow(f'Aplicacao do Modelo no Lado Direito: {device_name}', frame_detect_right)
                         if save_dir:
                             start_time = time.time()   # Início da medição de tempo
+
+                            save_frame(frame_original.copy(), frame_trigger.copy(), linha, 'original', id_image, data_hora_trigger, total_detections_left, os.path.join(save_dir, 'ORIGINAL'))
+                            
                             if total_detections_left < salvar_menores or total_detections_left > salvar_maiores:
                                 save_frame(frame_left, frame_detect_left, linha, 'esquerdo', id_image, data_hora_trigger, total_detections_left, save_dir)
 
@@ -673,15 +679,15 @@ def device_start_capture_multiples(camera_backend, torch_device, device_name, de
                                     (centro_texto_x, centro_texto_y),
                                     fonte, 2.5, (0, 255, 255), 4)
         # ----------- BLOCO PARA ESCRITA ETHERNET/IP CONDICIONAL E SEGURA -----------
-        if clp_ip is not None: # Só tenta escrever se um IP for fornecido
-            try:
-                # Chama a função _write_pylogix_internal com as contagens
-                feedback_clp = _write_pylogix_internal(clp_ip, total_detections_right, total_detections_left)
-                print(f"Ethernet/IP write feedback: {feedback_clp}")
-            except Exception as e:
-                print(f"ATENÇÃO: Erro ao escrever no CLP ({clp_ip}) via Ethernet/IP: {e}. O programa continua.")
-        else:
-            pass # print("CLP IP não configurado, pulando escrita no CLP via Ethernet/IP.") # Opcional: para depuração
+        # if clp_ip is not None: # Só tenta escrever se um IP for fornecido
+        #     try:
+        #         # Chama a função _write_pylogix_internal com as contagens
+        #         feedback_clp = _write_pylogix_internal(clp_ip, total_detections_right, total_detections_left)
+        #         print(f"Ethernet/IP write feedback: {feedback_clp}")
+        #     except Exception as e:
+        #         print(f"ATENÇÃO: Erro ao escrever no CLP ({clp_ip}) via Ethernet/IP: {e}. O programa continua.")
+        # else:
+        #     pass # print("CLP IP não configurado, pulando escrita no CLP via Ethernet/IP.") # Opcional: para depuração
         # ----------------------------------------------------------------------------
 
         # Exibe o quadro ao vivo
@@ -706,8 +712,8 @@ def save_frame(frame_original, frame_detection, linha, lado, id_image, data_hora
 
     caminho_SM = os.path.join(save_dir, 'SM')
     os.makedirs(caminho_SM, exist_ok=True)
-    frame_SM_path = os.path.join(caminho_SM, f'SM_{linha}_{id_image}_{data_hora_atual}.jpg')
-    csv_SM_path = os.path.join(caminho_SM, f'SM_{linha}_{id_image}_{data_hora_atual}.csv')
+    frame_SM_path = os.path.join(caminho_SM, f'SM_{linha}_{lado}_{id_image}_{data_hora_atual}.jpg')
+    csv_SM_path = os.path.join(caminho_SM, f'SM_{linha}_{lado}_{id_image}_{data_hora_atual}.csv')
     cv2.imwrite(frame_SM_path, frame_original)
 
     with open(csv_SM_path, mode='w', newline='') as csv_SM_file:
@@ -717,8 +723,8 @@ def save_frame(frame_original, frame_detection, linha, lado, id_image, data_hora
 
     caminho_CM = os.path.join(save_dir, 'CM')
     os.makedirs(caminho_CM, exist_ok=True)
-    frame_CM_path = os.path.join(caminho_CM, f'CM_{linha}_{id_image}_{data_hora_atual}.jpg')
-    csv_CM_path = os.path.join(caminho_CM, f'CM_{linha}_{id_image}_{data_hora_atual}.csv')
+    frame_CM_path = os.path.join(caminho_CM, f'CM_{linha}_{lado}_{id_image}_{data_hora_atual}.jpg')
+    csv_CM_path = os.path.join(caminho_CM, f'CM_{linha}_{lado}_{id_image}_{data_hora_atual}.csv')
     cv2.imwrite(frame_CM_path, frame_detection)
 
     with open(csv_CM_path, mode='w', newline='') as csv_CM_file:

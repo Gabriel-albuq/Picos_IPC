@@ -3,7 +3,7 @@ from datetime import datetime
 import numpy as np
 import os
 
-from src.class_camera_gx import GxiCapture
+from class_camera_gx import GxiCapture
 
 # Nome do diretório de saída dos vídeos
 output_dir = os.path.join("data", "videos")

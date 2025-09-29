@@ -25,7 +25,7 @@ if __name__ == '__main__':
     config_path = r'app\config.txt'
     exposure_value = 0.0
     sec_run_model = 0.4
-    wait_key = 16
+    wait_key = 60
 
     # Verificar se a GPU está disponível e configurar o dispositivo
     torch_device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

@@ -44,4 +44,9 @@ def run_model(torch_device, type_model, model, frame):
         # Obter as detecções
         detections_sorted = sorted(detections, key=lambda deteccao: deteccao[0][0])   # Ordena pelo x_min
 
+        # for i, deteccao in enumerate(detections_sorted):
+        #     score_da_deteccao = deteccao[1]
+        #     print(f"Detecção {i + 1}: Score = {score_da_deteccao:.4f}") # Formata o score para 4 casas decimais
+        # print("------------------------------------")
+
     return detections_sorted

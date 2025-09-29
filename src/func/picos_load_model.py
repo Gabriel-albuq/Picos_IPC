@@ -45,7 +45,8 @@ def load_model(type_model):
             'inputs',
             'ia_models',
             'FRCNN Resnet50',
-            'best_faster_rcnn_model_20250604_111351.pth'
+            #'best_faster_rcnn_model_20250604_111351.pth'
+           'best_faster_rcnn_model_20250911_075817.pth'
         )
         model.load_state_dict(torch.load(model_path, map_location=torch_device))   # Carregar o modelo salvo, mapeando para o dispositivo correto
         model.eval()  # Colocar o modelo em modo de avaliação
