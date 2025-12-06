@@ -14,20 +14,20 @@ def rules_detection(frame, detections_sorted, perc_top, perc_bottom, perc_median
                 center_y = (y_min + y_max) // 2   # Calcular o centro da caixa de detecção
                 all_centers.append(center_y)  # Adiciona y à lista de centros
 
-                if all_centers:
-                    median_y = int(np.median(all_centers))  # Obtém a mediana
-                    line_bottom_median = int(median_y + int((height * perc_median) / 2))
-                    line_top_median = int(median_y - int((height * perc_median) / 2))
-                    
-                    cv2.line(
-                        frame, 
-                        (640, median_y), 
-                        (640 + 640, median_y), 
-                        (255, 0, 0), 
-                        2,
-                    )  # Desenhar a linha horizontal na moda
+        if all_centers:
+            median_y = int(np.median(all_centers))  # Obtém a mediana
+            line_bottom_median = int(median_y + int((height * perc_median) / 2))
+            line_top_median = int(median_y - int((height * perc_median) / 2))
+            
+            cv2.line(
+                frame, 
+                (640, median_y), 
+                (640 + 640, median_y), 
+                (255, 0, 0), 
+                2,
+            )  # Desenhar a linha horizontal na moda
 
-                return all_centers, median_y, line_top_median, line_bottom_median
+            return all_centers, median_y, line_top_median, line_bottom_median
         
         return None, None, None, None
 
@@ -35,6 +35,7 @@ def rules_detection(frame, detections_sorted, perc_top, perc_bottom, perc_median
                       line_top_median, line_bottom_median, min_score, limit_center):
         """Filtra as detecções válidas com base em múltiplas condições."""
         valid_centers = []
+        no_valid_centers = []
 
         if centers and line_limit_bottom > median_y > line_limit_top:
             for idx, detection in enumerate(detections_sorted):
@@ -47,28 +48,29 @@ def rules_detection(frame, detections_sorted, perc_top, perc_bottom, perc_median
 
                 test_score = score > min_score
                 test_center = not any(np.linalg.norm(np.array([center_x, center_y]) - np.array(center)) < limit_center for center in valid_centers)
-                test_center_x = not any(abs(center_x - center[0]) < limit_center for center in valid_centers) # Redundante
                 test_median = (y_max > line_top_median and y_min < line_bottom_median)
-                test_area = area >= 2000  # Area precisa ser maior que x (excluir pedacos soltos)
+                test_area = area >= 0  # Area precisa ser maior que x (excluir pedacos soltos)
 
                 if test_score and test_median and test_center and test_area:
                         valid_centers.append((center_x, center_y))
 
-        return valid_centers
+                else:
+                    no_valid_centers.append((center_x, center_y))
 
-    def marcar_deteccoes(frame, valid_detections, limit_center):
+        return valid_centers, no_valid_centers
+    
+    def marcar_deteccoes(frame, valid_detections, limit_center, cor = (0, 0, 255)):
         """Desenha as detecções válidas no frame e atualiza o total."""
         total_detections = 0  # Contador total de detecções
         for center_x, center_y in valid_detections:
             total_detections += 1
 
-            cv2.circle(frame, (center_x, center_y), limit_center - 1, (0, 0, 255), -1)
+            cv2.circle(frame, (center_x, center_y), limit_center - 1, cor, -1)
             cv2.circle(frame, (center_x, center_y), limit_center, (255, 0, 0), 1)
             cv2.putText(frame, str(total_detections), (center_x - 6, center_y + 3),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
 
         return total_detections
-
     height, width = frame.shape[:2]
 
     # Define as posições das linhas

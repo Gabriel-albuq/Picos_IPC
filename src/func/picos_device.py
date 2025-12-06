@@ -22,36 +22,7 @@ CLP_TAG_LEFT_COUNT = 'count_left'   # SUBSTITUA PELO NOME REAL DA TAG NO SEU CLP
 
 
 # --- Funções Ethernet/IP (baseadas no seu exemplo write_pylogix.py) ---
-def _write_pylogix_internal(clp_ip, right_count, left_count):
-    """
-    Função interna para escrita Ethernet/IP usando pylogix.
-    Envia as contagens para as tags especificadas no CLP.
-    """
-    feedback = "Sucesso"
-    try:
-        with PLC() as comm:
-            comm.IPAddress = clp_ip
-            # Define as variáveis a serem escritas como uma lista de tuplas
-            tags_to_write = [
-                (CLP_TAG_RIGHT_COUNT, right_count),
-                (CLP_TAG_LEFT_COUNT, left_count)
-            ]
-
-            print(f"✍️ Escrevendo variáveis no CLP ({clp_ip}):")
-            results = comm.Write(tags_to_write)
-
-            if isinstance(results, list):
-                for res in results:
-                    if res.Status == 'Success':
-                        print(f"  {res.TagName} atualizado para {res.Value}")
-                    else:
-                        print(f"  Erro ao escrever em {res.TagName}: {res.Status}")
-                        feedback = f"Erro em {res.TagName}: {res.Status}"
-            # O caso 'else' de apenas uma tag não é necessário aqui
-    except Exception as e:
-        feedback = f"Exceção na comunicação CLP ({clp_ip}): {e}"
-    
-    return feedback
+G
 
 # Funções Modbus (mantidas para referência, mas não utilizadas pela lógica principal se o IP for passado)
 # (Mantive os comentários e o código originais para não perder nada)
