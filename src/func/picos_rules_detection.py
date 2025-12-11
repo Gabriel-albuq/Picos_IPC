@@ -71,6 +71,7 @@ def rules_detection(frame, detections_sorted, perc_top, perc_bottom, perc_median
                         cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 255), 1)
 
         return total_detections
+
     height, width = frame.shape[:2]
 
     # Define as posições das linhas
@@ -84,17 +85,17 @@ def rules_detection(frame, detections_sorted, perc_top, perc_bottom, perc_median
     ### CALCULO DA MEDIANA
     all_centers, median_y, line_top_median, line_bottom_median = median_calculate(detections_sorted, min_score, height, perc_median)
 
-    if all_centers:
+    if all_centers and median_y is not None and line_limit_bottom > median_y > line_limit_top:
         ### FILTRAGEM
-        valid_centers = filtrar_deteccoes(detections_sorted, all_centers, median_y, line_limit_top, line_limit_bottom, line_top_median, line_bottom_median, min_score, limit_center)
-
+        valid_centers, no_valid_centers = filtrar_deteccoes(detections_sorted, all_centers, median_y, line_limit_top, line_limit_bottom, line_top_median, line_bottom_median, min_score, limit_center)
         ### MARCACAO
         total_detections = marcar_deteccoes(frame, valid_centers, limit_center)
+        # _ = marcar_deteccoes(frame, no_valid_centers, limit_center, cor = (0, 0, 0))
 
         cv2.rectangle(frame, (0, 0), (frame.shape[1], 40), (80, 43, 30), -1)
 
-        cv2.line(frame, (0, line_top_median), (640 + 640, line_top_median), (255, 0, 0), 2)
-        cv2.line(frame,(0, line_bottom_median), (640 + 640, line_bottom_median), (255, 0, 0), 2)
+        cv2.line(frame, (0, line_top_median), (frame.shape[1], line_top_median), (255, 0, 0), 2)
+        cv2.line(frame,(0, line_bottom_median), (frame.shape[1], line_bottom_median), (255, 0, 0), 2)
 
         text_position = (0, 0)
         text = f'Total de Biscoitos: {total_detections}'
