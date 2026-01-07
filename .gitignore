@@ -2,6 +2,8 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python
 
 # Outras pastas
+runs/
+pipeline/projeto_biscoito
 data/inputs/ia_models/
 data/inputs/videos/
 data/outputs/
@@ -10,6 +12,11 @@ data/inputs/test_videos/
 data/inputs/train_images/
 aux_install
 Picos_IPC.zip
+pipeline/rtdetr-l.pt
+video_gerado.mp4
+video_intermitente_final.mp4
+gerador_video.py
+
 
 ### Python ###
 # Byte-compiled / optimized / DLL files

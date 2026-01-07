@@ -7,7 +7,7 @@ from torchvision.models import mobilenet_v3_small
 from torchvision.models.detection import FasterRCNN
 from torchvision.models.detection.rpn import AnchorGenerator
 from torchvision.ops import MultiScaleRoIAlign
-#rom ultralytics import YOLO
+from ultralytics import RTDETR
 
 # Verificar se a GPU está disponível e configurar o dispositivo
 torch_device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -46,7 +46,8 @@ def load_model(type_model):
             'ia_models',
             'FRCNN Resnet50',
             #'best_faster_rcnn_model_20250604_111351.pth'
-           'best_faster_rcnn_model_20250911_075817.pth'
+           #'best_faster_rcnn_model_20251205_120558 - 8.pth'
+           'best_faster_rcnn_model_20251205_120558.pth'
         )
         model.load_state_dict(torch.load(model_path, map_location=torch_device))   # Carregar o modelo salvo, mapeando para o dispositivo correto
         model.eval()  # Colocar o modelo em modo de avaliação
@@ -111,7 +112,22 @@ def load_model(type_model):
         )
         model.eval()   # Colocar o modelo em modo de avaliação
 
-    print(f'Model: {type(model).__name__}')  # Exibe o nome da classe do modelo
+    if type_model == 'RTDETR':
+        model_path = os.path.join(
+            parent_directory,
+            'data',
+            'inputs',
+            'ia_models',
+            'RTDETR',
+            'best_1280_x.pt',
+        )
+
+        model = RTDETR(model_path)
+        model.to(torch_device)
+    
+        model.eval()
+        
+    print(f'Model: {type(model).__name__}')
     return model
 
 
