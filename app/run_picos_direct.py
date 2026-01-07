@@ -20,7 +20,7 @@ from src.func import (
 
 if __name__ == '__main__':
     # INPUTS
-    type_model = 'FRCNN_RN50'
+    type_model = 'RTDETR'
     model = load_model(type_model)
     config_path = r'app\config.txt'
     exposure_value = 0.0

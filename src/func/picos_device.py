@@ -22,7 +22,7 @@ CLP_TAG_LEFT_COUNT = 'count_left'   # SUBSTITUA PELO NOME REAL DA TAG NO SEU CLP
 
 
 # --- Funções Ethernet/IP (baseadas no seu exemplo write_pylogix.py) ---
-G
+
 
 # Funções Modbus (mantidas para referência, mas não utilizadas pela lógica principal se o IP for passado)
 # (Mantive os comentários e o código originais para não perder nada)
@@ -89,6 +89,7 @@ def device_config(device_name, device, device_fps, device_width,
     device.set(cv2.CAP_PROP_FRAME_HEIGHT, device_height)
     device.set(cv2.CAP_PROP_EXPOSURE, device_exposure)
     device.set(cv2.CAP_PROP_FPS, device_fps)
+    device.set(cv2.CAP_PROP_BUFFERSIZE, 1)
     print('-----------------------------------')
 
     return device
@@ -303,6 +304,7 @@ def device_start_capture(device_path, option_visualize, camera_backend, torch_de
             # Rodar o modelo
             if time_run_model:
                 if result_trigger:
+                    
                     frame_left, frame_right = crop_boxes_from_frame(frame_original.copy(), perc_top, perc_bottom, box_size, box_distance, box_offset_x)
 
                     start_time = time.time()   # Início da medição de tempo
@@ -374,6 +376,11 @@ def device_start_capture(device_path, option_visualize, camera_backend, torch_de
                             end_time = time.time()  # Fim da medição de tempo
                             processing_time = end_time - start_time
                             print(f'(Tempo para salvar a imagem: {processing_time:.4f}s)')
+            
+            # print(count_trigger)
+            # if count_trigger == 39:
+            #     print(total_detections_right)
+            #     time.sleep(120)
 
             # Botões para configurar
             key = cv2.waitKey(wait_key) & 0xFF
